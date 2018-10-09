@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2041
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDF2IMG", "PDF2IMG\PDF2IMG.csproj", "{D91A123F-535D-4549-B45C-977FBF5F2097}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PDF2IMGTest", "PDF2IMGTest\PDF2IMGTest.csproj", "{887A0E2B-0B0E-49FE-B894-C4428E4AC955}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D91A123F-535D-4549-B45C-977FBF5F2097}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D91A123F-535D-4549-B45C-977FBF5F2097}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D91A123F-535D-4549-B45C-977FBF5F2097}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D91A123F-535D-4549-B45C-977FBF5F2097}.Release|Any CPU.Build.0 = Release|Any CPU
+		{887A0E2B-0B0E-49FE-B894-C4428E4AC955}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{887A0E2B-0B0E-49FE-B894-C4428E4AC955}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{887A0E2B-0B0E-49FE-B894-C4428E4AC955}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{887A0E2B-0B0E-49FE-B894-C4428E4AC955}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {43866B1E-C96B-4CA8-ADAD-EFCD859462B5}
+	EndGlobalSection
+EndGlobal
