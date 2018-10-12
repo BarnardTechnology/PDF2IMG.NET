@@ -6,6 +6,14 @@
     <Company>Barnard Technology Ltd</Company>
     <PackageProjectUrl>https://github.com/BarnardTechnology/PDF2IMG.NET</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/BarnardTechnology/PDF2IMG.NET/blob/master/LICENSE</PackageLicenseUrl>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Version>1.2.0</Version>
+    <Authors>PDF2IMG</Authors>
+    <Description>Provides PDF to Bitmap functionality using PDF.JS and CefSharp in the background. Very much a work-in-progress.</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,7 +25,31 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="cef.redist.x64" Version="3.3396.1786" />
+    <PackageReference Include="cef.redist.x86" Version="3.3396.1786" />
+    <PackageReference Include="CefSharp.Common" Version="67.0.0" />
+    <PackageReference Include="CefSharp.OffScreen" Version="67.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="System.Drawing.Common" Version="4.5.1" />
+    <PackageReference Include="System.Drawing.Primitives" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Extensions" Version="4.3.0" />
     <PackageReference Include="System.Security.Permissions" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PDF.JS\PDF.JS.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Update="CefSharp">
+      <Private>true</Private>
+    </Reference>
+    <Reference Update="CefSharp.Core">
+      <Private>true</Private>
+    </Reference>
+    <Reference Update="CefSharp.OffScreen">
+      <Private>true</Private>
+    </Reference>
   </ItemGroup>
 
 </Project>

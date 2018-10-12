@@ -1,0 +1,207 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+using CefSharp;
+using CefSharp.OffScreen;
+
+namespace BarnardTech
+{
+    public class PageRenderer : IDisposable
+    {
+        ChromiumWebBrowser cefBrowser;
+        public bool IsReady { get; private set; } = false;
+        private Action _onReady;
+        AutoResetEvent paintEvent = new AutoResetEvent(false);
+        ManualResetEvent renderEvent = new ManualResetEvent(false);
+
+        private bool _pdfLoadWaiting = false;
+        private Action _pdfLoadedCallback = null;
+        private Action<int> _pageRenderedCallback = null;
+        public int PageCount = 0;
+        public int CurrentPageNumber = 0;
+
+        public PageRenderer(Action OnReady = null)
+        {
+            _onReady = OnReady;
+            //AppDomain.CurrentDomain.AssemblyResolve += Resolver;
+
+            FileResourceHandlerFactory fileResourceHandlerFactory = new FileResourceHandlerFactory("pdfviewer", "host", Directory.GetCurrentDirectory());
+
+            var settings = new CefSettings();
+            settings.RegisterScheme(new CefCustomScheme
+            {
+                SchemeName = "pdfviewer",
+                SchemeHandlerFactory = fileResourceHandlerFactory,
+                IsSecure = true //treated with the same security rules as those applied to "https" URLs
+            });
+            CefSharpSettings.LegacyJavascriptBindingEnabled = true;
+            Cef.Initialize(settings);
+
+            cefBrowser = new ChromiumWebBrowser("pdfviewer://host/web/pdfcapture.html");
+            //cefBrowser = new ChromiumWebBrowser("http://www.google.com/");
+            //cefBrowser.RenderHandler = new CefRenderHandler(cefBrowser);
+            cefBrowser.LoadingStateChanged += CefBrowser_LoadingStateChanged;
+            cefBrowser.Paint += CefBrowser_Paint;
+            cefBrowser.Size = new Size(1024, 768);
+            cefBrowser.RegisterJsObject("viewerCallback", new viewerCallback(cefBrowser, this));
+        }
+
+        private void CefBrowser_Paint(object sender, OnPaintEventArgs e)
+        {
+            //Console.WriteLine("PAINT");
+            paintEvent.Set();
+        }
+
+        public void LoadPDF(string filename, Action pdfLoaded, Action<int> pageRendered)
+        {
+            if (!_pdfLoadWaiting)
+            {
+                _pdfLoadWaiting = true;
+                _pdfLoadedCallback = pdfLoaded;
+                _pageRenderedCallback = pageRendered;
+                var buffer = File.ReadAllBytes(filename);
+                var asBase64 = Convert.ToBase64String(buffer);
+                cefBrowser.ExecuteScriptAsync("openPdfAsBase64", new[] { asBase64 });
+            }
+            else
+            {
+                throw new Exception("A PDF file is already waiting to be loaded.");
+            }
+        }
+
+        public void GotoPage(int pageNumber)
+        {
+            cefBrowser.ExecuteScriptAsync("setCurrentPage", new[] { pageNumber.ToString() });
+        }
+
+        internal void OnPdfRendered(int pageNumber)
+        {
+            CurrentPageNumber = pageNumber;
+            paintEvent.Reset();
+            renderEvent.Set();
+        }
+
+        internal void OnPdfLoaded(int numPages)
+        {
+            renderEvent.Reset();
+            PageCount = numPages;
+            if(_pdfLoadedCallback != null)
+            {
+                _pdfLoadedCallback();
+            }
+        }
+
+        internal void OnPageOpened(PageViewport viewport, int pageNumber)
+        {
+            CurrentPageNumber = pageNumber;
+            cefBrowser.Size = new Size((int)Math.Round(viewport.width), (int)Math.Round(viewport.height));
+            _pdfLoadWaiting = false;
+            renderEvent.Reset();
+            if (_pageRenderedCallback != null)
+            {
+                new Task(() =>
+                {
+                    // wait for render first
+                    renderEvent.WaitOne(1000); // sometimes a render doesn't happen - we need to fine-tune this.
+                    // then wait for the paint that happens after the render
+                    paintEvent.WaitOne();
+                    _pageRenderedCallback(CurrentPageNumber);
+                }).Start();
+            }
+        }
+
+        public Bitmap GetPage()
+        {
+            //var completionSource = new TaskCompletionSource<Bitmap>();
+            //System.Drawing.Bitmap b = await cefBrowser.ScreenshotAsync();
+            if(cefBrowser.RenderHandler != null)
+            {
+                var renderHandler = cefBrowser.RenderHandler as DefaultRenderHandler;
+
+                if(renderHandler != null)
+                {
+                    if(renderHandler.BitmapBuffer.NumberOfBytes == 0)
+                    {
+                        return null;
+                    }
+
+                    lock(renderHandler.BitmapLock)
+                    {
+                        // copy buffer to a new byte array
+                        IntPtr unmanagedPointer = Marshal.AllocHGlobal(renderHandler.BitmapBuffer.NumberOfBytes);
+                        Marshal.Copy(renderHandler.BitmapBuffer.Buffer, 0, unmanagedPointer, renderHandler.BitmapBuffer.NumberOfBytes);
+
+                        byte[] newBytes = new byte[renderHandler.BitmapBuffer.NumberOfBytes];
+                        Marshal.Copy(unmanagedPointer, newBytes, 0, renderHandler.BitmapBuffer.NumberOfBytes);
+
+                        Marshal.FreeHGlobal(unmanagedPointer);
+
+                        // now get a pointer to our new byte array and generate a bitmap object
+                        Bitmap bmp;
+                        unsafe
+                        {
+                            fixed (byte* p = newBytes)
+                            {
+                                IntPtr ptr = (IntPtr)p;
+                                bmp = new Bitmap(renderHandler.BitmapBuffer.Width, renderHandler.BitmapBuffer.Height, renderHandler.BitmapBuffer.Width * 4, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, ptr);
+                            }
+                        }
+                        //Bitmap cloned = bmp.Clone(new Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+                        return bmp;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private void CefBrowser_LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
+        {
+            //Console.WriteLine("OffScreen loading state: " + e.IsLoading);
+            if(!e.IsLoading && !IsReady)
+            {
+                IsReady = true;
+                if(_onReady != null)
+                {
+                    // fire our onReady back in a new thread, so it doesn't clash with what we're running here
+                    new Task(_onReady).Start();
+                }
+            }
+        }
+
+        // Will attempt to load missing assembly from either x86 or x64 subdir
+        private static Assembly Resolver(object sender, ResolveEventArgs args)
+        {
+            if (args.Name.StartsWith("CefSharp"))
+            {
+                string assemblyName = args.Name.Split(new[] { ',' }, 2)[0] + ".dll";
+
+                //string archSpecificPath = Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
+                string archSpecificPath = Path.Combine(Assembly.GetEntryAssembly().Location,
+                                                       Environment.Is64BitProcess ? "x64" : "x86",
+                                                       assemblyName);
+
+                return File.Exists(archSpecificPath)
+                           ? Assembly.LoadFile(archSpecificPath)
+                           : null;
+            }
+
+            return null;
+        }
+
+        public void Dispose()
+        {
+            if(cefBrowser != null)
+            {
+                cefBrowser.Dispose();
+            }
+        }
+    }
+}
