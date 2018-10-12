@@ -59,15 +59,5 @@ namespace PDF2IMGTest.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] pdf_sample {
-            get {
-                object obj = ResourceManager.GetObject("pdf_sample", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }

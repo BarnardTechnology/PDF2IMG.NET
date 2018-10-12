@@ -15,6 +15,7 @@ namespace BarnardTech
 {
     public class PageRenderer : IDisposable
     {
+        static bool AlreadyInitialized = false;
         ChromiumWebBrowser cefBrowser;
         public bool IsReady { get; private set; } = false;
         private Action _onReady;
@@ -34,15 +35,19 @@ namespace BarnardTech
 
             FileResourceHandlerFactory fileResourceHandlerFactory = new FileResourceHandlerFactory("pdfviewer", "host", Directory.GetCurrentDirectory());
 
-            var settings = new CefSettings();
-            settings.RegisterScheme(new CefCustomScheme
+            if (!AlreadyInitialized)
             {
-                SchemeName = "pdfviewer",
-                SchemeHandlerFactory = fileResourceHandlerFactory,
-                IsSecure = true //treated with the same security rules as those applied to "https" URLs
-            });
-            CefSharpSettings.LegacyJavascriptBindingEnabled = true;
-            Cef.Initialize(settings);
+                AlreadyInitialized = true;
+                var settings = new CefSettings();
+                settings.RegisterScheme(new CefCustomScheme
+                {
+                    SchemeName = "pdfviewer",
+                    SchemeHandlerFactory = fileResourceHandlerFactory,
+                    IsSecure = true //treated with the same security rules as those applied to "https" URLs
+                });
+                CefSharpSettings.LegacyJavascriptBindingEnabled = true;
+                Cef.Initialize(settings);
+            }
 
             cefBrowser = new ChromiumWebBrowser("pdfviewer://host/web/pdfcapture.html");
             //cefBrowser = new ChromiumWebBrowser("http://www.google.com/");

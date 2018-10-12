@@ -33,7 +33,7 @@ namespace BarnardTech
 
             path = path.Replace("/", ".").Replace("-", "_");
 
-            var assembly = typeof(PDFJS).GetTypeInfo().Assembly;
+            var assembly = typeof(PageRenderer).GetTypeInfo().Assembly;
 
             if (manifestResourceNames == null)
             {
@@ -46,7 +46,7 @@ namespace BarnardTech
             {
                 try
                 {
-                    if (mName.Replace("-", "_") == "PDF.JS.Resources." + path)
+                    if (mName.Replace("-", "_") == "PDF2IMG.Resources." + path)
                     {
                         //Console.WriteLine("found " + path);
                         using (var stream = assembly.GetManifestResourceStream(mName))

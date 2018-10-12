@@ -17,8 +17,7 @@ namespace PDF2IMGTest
             {
                 Console.WriteLine("Page renderer ready.");
 
-                //pRender.LoadPDF(@"C:\Users\chris.barnard\Downloads\standard-conditions-specimen.pdf", () =>
-                pRender.LoadPDF(@"C:\Users\chris.barnard\Documents\GitHub\RGFileManager\RGFileIndexService\bin\Debug\temp_5f7d3de3-2f66-4e07-a6b8-eabaee30452f_.pdf", () =>
+                pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf", () =>
                 {
                     pRender.GotoPage(1);
                 },
@@ -49,13 +48,8 @@ namespace PDF2IMGTest
 
         static void TestGSConversion(string[] args)
         {
-            string pdf_filename = BarnardTech.Pdf2Image.GetProgramFilePath("pdf-sample.pdf");
+            string pdf_filename = BarnardTech.Pdf2Image.GetProgramFilePath("compressed.tracemonkey-pldi-09.pdf");
             string png_filename = BarnardTech.Pdf2Image.GetProgramFilePath("converted.png");
-
-            if (!File.Exists(pdf_filename))
-            {
-                File.WriteAllBytes(pdf_filename, Properties.Resources.pdf_sample);
-            }
 
             if (args.Length > 2)
             {

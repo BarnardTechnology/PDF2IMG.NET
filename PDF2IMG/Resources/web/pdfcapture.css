@@ -1,0 +1,15 @@
+﻿.toolbar {
+    display: none;
+}
+
+#viewerContainer {
+    top: 0px;
+    bottom: 0px;
+    overflow: hidden;
+}
+
+.pdfViewer .page {
+    margin: unset;
+    border: unset;
+    border-image: unset;
+}
