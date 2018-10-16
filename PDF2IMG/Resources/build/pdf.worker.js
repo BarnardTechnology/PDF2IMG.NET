@@ -17658,6 +17658,7 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       var textContentItem = {
         initialized: false,
         str: [],
+        chars: [],
         width: 0,
         height: 0,
         vertical: false,
@@ -17755,6 +17756,7 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
         var bidiResult = (0, _bidi.bidi)(str, -1, textChunk.vertical);
         return {
           str: normalizeWhitespace ? replaceWhitespace(bidiResult.str) : bidiResult.str,
+          chars: textChunk.chars,
           dir: bidiResult.dir,
           width: textChunk.width,
           height: textChunk.height,
@@ -17771,14 +17773,30 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       function buildTextContentItem(chars) {
         var font = textState.font;
         var textChunk = ensureTextContentItem();
+        if (!Array.isArray(textChunk.chars)) {
+          textChunk.chars = [];
+        }
         var width = 0;
         var height = 0;
         var glyphs = font.charsToGlyphs(chars);
+
+        var tsm = [textState.fontSize * textState.textHScale, 0, 0, textState.fontSize, 0, textState.textRise];
+
         for (var i = 0; i < glyphs.length; i++) {
           var glyph = glyphs[i];
+          var vMetricX = null;
+          var vMetricY = null;
           var glyphWidth = null;
-          if (font.vertical && glyph.vmetric) {
-            glyphWidth = glyph.vmetric[0];
+            if (font.vertical) {
+              if (glyph.vmetric) {
+                glyphWidth = glyph.vmetric[0];
+                vMetricX = glyph.vmetric[1];
+                vMetricY = glyph.vmetric[2];
+              } else {
+                glyphWidth = glyph.width;
+                vMetricX = glyph.width * 0.5;
+                vMetricY = defaultVMetrics[2];
+              }
           } else {
             glyphWidth = glyph.width;
           }
@@ -17796,6 +17814,20 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
               addFakeSpaces(wordSpacing, textChunk.str);
             }
           }
+
+          // The following will calculate the x and y of the individual glyphs.
+          if (font.vertical) {
+            tsm[4] -= vMetricX * Math.abs(textState.fontSize) *
+              textState.fontMatrix[0];
+            tsm[5] -= vMetricY * textState.fontSize *
+              textState.fontMatrix[0];
+          }
+          var trm = _util.Util.transform(textState.textMatrix, tsm);
+          var pt = _util.Util.applyTransform([trm[4], trm[5]], textState.ctm);
+          var x = pt[0];
+          var y = pt[1];
+          textChunk.chars.push({ Character: chars[i], X: x, Y: y });
+
           var tx = 0;
           var ty = 0;
           if (!font.vertical) {
@@ -17807,6 +17839,7 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
             ty = w1 * textState.fontSize + charSpacing;
             height += ty;
           }
+
           textState.translateTextMatrix(tx, ty);
           textChunk.str.push(glyphUnicode);
         }

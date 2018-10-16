@@ -23,7 +23,6 @@ window.openPdfAsBase64 = function (base64) {
     });
 };
 
-
 window.setCurrentPage = function (pageNumber) {
     pageNumber = parseInt(pageNumber);
     console.log('setting page number to: ' + pageNumber);
@@ -31,6 +30,20 @@ window.setCurrentPage = function (pageNumber) {
     PDFViewerApplication.pdfDocument.getPage(pageNumber).then((page) => {
         viewerCallback.pageOpened(JSON.stringify(page.getViewport(1)), pageNumber);
     }, 10);
+};
+
+window.getTextContent = function (pageNumber) {
+    pageNumber = parseInt(pageNumber);
+    PDFViewerApplication.pdfDocument.getPage(1).then(
+        (page) => {
+            page.getTextContent().then(
+                (content) => {
+                    content.viewport = page.getViewport(1);
+                    viewerCallback.textContent(pageNumber, JSON.stringify(content));
+                }
+            );
+        }
+    );
 };
 
 document.addEventListener('textlayerrendered', function (event) {

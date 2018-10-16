@@ -10,6 +10,7 @@
     <Version>1.3.1</Version>
     <Authors>PDF2IMG</Authors>
     <Description>Provides PDF to Bitmap functionality using PDF.JS and CefSharp in the background. Very much a work-in-progress.</Description>
+    <RootNamespace>BarnardTech.PDF2IMG</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

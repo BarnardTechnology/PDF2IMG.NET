@@ -11,10 +11,18 @@ using System.Threading.Tasks;
 using CefSharp;
 using CefSharp.OffScreen;
 
-namespace BarnardTech
+namespace BarnardTech.PDF2IMG
 {
+    public delegate void PDFLoadedDelegate(object sender, EventArgs eventArgs);
+    public delegate void TextContentDelegate(object sender, TextContentEventArgs eventArgs);
+    public delegate void PageRenderedDelegate(object sender, PageRenderedEventArgs eventArgs);
+
     public class PageRenderer : IDisposable
     {
+        public event TextContentDelegate OnGotTextContent;
+        public event PDFLoadedDelegate OnPDFLoaded;
+        public event PageRenderedDelegate OnPageRendered;
+
         static bool AlreadyInitialized = false;
         ChromiumWebBrowser cefBrowser;
         public bool IsReady { get; private set; } = false;
@@ -23,10 +31,11 @@ namespace BarnardTech
         ManualResetEvent renderEvent = new ManualResetEvent(false);
 
         private bool _pdfLoadWaiting = false;
-        private Action _pdfLoadedCallback = null;
-        private Action<int> _pageRenderedCallback = null;
+        //private Action _pdfLoadedCallback = null;
+        //private Action<int> _pageRenderedCallback = null;
         public int PageCount = 0;
         public int CurrentPageNumber = 0;
+        private List<InternalTextContent> textContents = new List<InternalTextContent>();
 
         public PageRenderer(Action OnReady = null)
         {
@@ -58,19 +67,53 @@ namespace BarnardTech
             cefBrowser.RegisterJsObject("viewerCallback", new viewerCallback(cefBrowser, this));
         }
 
+        public void GetTextContent(int pageNumber)
+        {
+            if(pageNumber > 0 && pageNumber <= PageCount)
+            {
+                cefBrowser.ExecuteScriptAsync("getTextContent", new[] { pageNumber.ToString() });
+            }
+        }
+
+        internal void gotTextContents(int pageNumber, InternalTextContent tContent)
+        {
+            List<TextContentItem> textContents = new List<TextContentItem>();
+            foreach(InternalTextContentItem item in tContent.items)
+            {
+                textContents.Add(new TextContentItem()
+                {
+                    Text = item.str,
+                    Direction = item.dir == "rtl" ? TextDirection.RightToLeft : TextDirection.LeftToRight,
+                    Width = item.width,
+                    Height = item.height,
+                    X = item.transform[4],
+                    Y = item.transform[5],
+                    FontName = item.fontName,
+                    Chars = item.chars
+                });
+            }
+
+            OnGotTextContent(this, new TextContentEventArgs()
+            {
+                PageNumber = pageNumber,
+                TextContent = textContents,
+                Viewport = tContent.viewport
+            });
+        }
+
         private void CefBrowser_Paint(object sender, OnPaintEventArgs e)
         {
             //Console.WriteLine("PAINT");
             paintEvent.Set();
         }
 
-        public void LoadPDF(string filename, Action pdfLoaded, Action<int> pageRendered)
+        public void LoadPDF(string filename)//, Action pdfLoaded, Action<int> pageRendered)
         {
             if (!_pdfLoadWaiting)
             {
                 _pdfLoadWaiting = true;
-                _pdfLoadedCallback = pdfLoaded;
-                _pageRenderedCallback = pageRendered;
+                //_pdfLoadedCallback = pdfLoaded;
+                //_pageRenderedCallback = pageRendered;
                 var buffer = File.ReadAllBytes(filename);
                 var asBase64 = Convert.ToBase64String(buffer);
                 cefBrowser.ExecuteScriptAsync("openPdfAsBase64", new[] { asBase64 });
@@ -97,9 +140,13 @@ namespace BarnardTech
         {
             renderEvent.Reset();
             PageCount = numPages;
-            if(_pdfLoadedCallback != null)
+            //if(_pdfLoadedCallback != null)
+            //{
+            //    _pdfLoadedCallback();
+            //}
+            if (OnPDFLoaded != null)
             {
-                _pdfLoadedCallback();
+                OnPDFLoaded(this, new EventArgs());
             }
         }
 
@@ -109,7 +156,7 @@ namespace BarnardTech
             cefBrowser.Size = new Size((int)Math.Round(viewport.width), (int)Math.Round(viewport.height));
             _pdfLoadWaiting = false;
             renderEvent.Reset();
-            if (_pageRenderedCallback != null)
+            /*if (_pageRenderedCallback != null)
             {
                 new Task(() =>
                 {
@@ -119,7 +166,17 @@ namespace BarnardTech
                     paintEvent.WaitOne();
                     _pageRenderedCallback(CurrentPageNumber);
                 }).Start();
-            }
+            }*/
+            new Task(() =>
+            {
+                renderEvent.WaitOne(1000);
+                paintEvent.WaitOne();
+                OnPageRendered(this, new PageRenderedEventArgs()
+                {
+                    PageNumber = pageNumber,
+                    PageImage = GetPage()
+                });
+            }).Start();
         }
 
         public Bitmap GetPage()

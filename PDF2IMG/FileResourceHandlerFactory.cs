@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using CefSharp;
 
+using BarnardTech.PDF2IMG;
+
 namespace BarnardTech
 {
     internal class FileResourceHandlerFactory : ISchemeHandlerFactory
@@ -46,7 +48,7 @@ namespace BarnardTech
             {
                 try
                 {
-                    if (mName.Replace("-", "_") == "PDF2IMG.Resources." + path)
+                    if (mName.Replace("-", "_") == "BarnardTech.PDF2IMG.Resources." + path)
                     {
                         //Console.WriteLine("found " + path);
                         using (var stream = assembly.GetManifestResourceStream(mName))
