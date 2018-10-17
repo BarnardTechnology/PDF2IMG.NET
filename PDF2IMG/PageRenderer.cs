@@ -109,7 +109,7 @@ namespace BarnardTech.PDF2IMG
                     TextContent = textContents,
                     Viewport = tContent.viewport
                 });
-            });
+            }).Start();
         }
 
         public Bitmap RenderPageSync(int pageNumber)
@@ -195,7 +195,7 @@ namespace BarnardTech.PDF2IMG
             new Task(() =>
             {
                 renderEvent.WaitOne(1000);
-                while (paintEvent.WaitOne(500)) ; // this is a bit flaky - basically we want to keep waiting until we no longer get any paint events
+                while (paintEvent.WaitOne(500)) ; // this is a bit flaky but seems to work - basically we want to keep waiting until we no longer get any paint events
                 pageRenderedEvent.Set();
                 OnPageRendered(this, new PageRenderedEventArgs()
                 {
