@@ -75,6 +75,24 @@ namespace BarnardTech.PDF2IMG
             browserThread.Start();
         }
 
+        ManualResetEvent textContentsReady = new ManualResetEvent(false);
+        List<TextContentItem> currentTextContents = null;
+
+        public List<TextContentItem> GetTextContentSync(int pageNumber)
+        {
+            if (pageNumber > 0 && pageNumber <= PageCount)
+            {
+                textContentsReady.Reset();
+                cefBrowser.ExecuteScriptAsync("getTextContent", new[] { pageNumber.ToString() });
+                textContentsReady.WaitOne();
+                return currentTextContents;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public void GetTextContent(int pageNumber)
         {
             if(pageNumber > 0 && pageNumber <= PageCount)
@@ -110,6 +128,9 @@ namespace BarnardTech.PDF2IMG
                     Viewport = tContent.viewport
                 });
             }).Start();
+
+            currentTextContents = textContents;
+            textContentsReady.Set();
         }
 
         public Bitmap RenderPageSync(int pageNumber)
