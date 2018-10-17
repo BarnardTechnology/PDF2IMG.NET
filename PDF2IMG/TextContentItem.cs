@@ -11,7 +11,7 @@ namespace BarnardTech.PDF2IMG
 
     public class TextContentChar
     {
-        public char Character;
+        public string Character;
         public double X;
         public double Y;
     }
