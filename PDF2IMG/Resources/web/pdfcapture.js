@@ -34,7 +34,7 @@ window.setCurrentPage = function (pageNumber) {
 
 window.getTextContent = function (pageNumber) {
     pageNumber = parseInt(pageNumber);
-    PDFViewerApplication.pdfDocument.getPage(1).then(
+    PDFViewerApplication.pdfDocument.getPage(pageNumber).then(
         (page) => {
             page.getTextContent().then(
                 (content) => {
