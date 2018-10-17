@@ -30,6 +30,8 @@ namespace BarnardTech.PDF2IMG
         AutoResetEvent paintEvent = new AutoResetEvent(false);
         ManualResetEvent renderEvent = new ManualResetEvent(false);
         ManualResetEvent pageRenderedEvent = new ManualResetEvent(false);
+        ManualResetEvent textReady = new ManualResetEvent(false);
+        string currentText = "";
 
         private bool _pdfLoadWaiting = false;
         //private Action _pdfLoadedCallback = null;
@@ -41,7 +43,6 @@ namespace BarnardTech.PDF2IMG
 
         public PageRenderer(Action OnReady = null)
         {
-            
             _onReady = OnReady;
             //AppDomain.CurrentDomain.AssemblyResolve += Resolver;
 
@@ -93,12 +94,33 @@ namespace BarnardTech.PDF2IMG
             }
         }
 
+        public string GetTextSync(int pageNumber)
+        {
+            if (pageNumber > 0 && pageNumber <= PageCount)
+            {
+                textReady.Reset();
+                cefBrowser.ExecuteScriptAsync("getText", new[] { pageNumber.ToString() });
+                textReady.WaitOne();
+                return currentText;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public void GetTextContent(int pageNumber)
         {
             if(pageNumber > 0 && pageNumber <= PageCount)
             {
                 cefBrowser.ExecuteScriptAsync("getTextContent", new[] { pageNumber.ToString() });
             }
+        }
+
+        internal void gotText(int pageNumber, string text)
+        {
+            currentText = text;
+            textReady.Set();
         }
 
         internal void gotTextContents(int pageNumber, InternalTextContent tContent)
@@ -146,7 +168,7 @@ namespace BarnardTech.PDF2IMG
 
         private void CefBrowser_Paint(object sender, OnPaintEventArgs e)
         {
-            Console.WriteLine("PAINT");
+            //Console.WriteLine("PAINT");
             paintEvent.Set();
         }
 

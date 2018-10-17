@@ -38,6 +38,11 @@ namespace BarnardTech.PDF2IMG
             InternalTextContent tContent = JsonConvert.DeserializeObject<InternalTextContent>(contentJSON);
             _pRender.gotTextContents(pageNumber, tContent);
         }
+
+        public void textOnly(int pageNumber, string text)
+        {
+            _pRender.gotText(pageNumber, text);
+        }
     }
 
     internal class InternalTextContent

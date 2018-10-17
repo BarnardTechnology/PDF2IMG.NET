@@ -46,6 +46,23 @@ window.getTextContent = function (pageNumber) {
     );
 };
 
+window.getText = function (pageNumber) {
+    pageNumber = parseInt(pageNumber);
+    PDFViewerApplication.pdfDocument.getPage(pageNumber).then(
+        (page) => {
+            page.getTextContent().then(
+                (content) => {
+                    var outStr = "";
+                    for (var i = 0; i < content.items.length; i++) {
+                        outStr += content.items[i].str + " ";
+                    }
+                    viewerCallback.textOnly(pageNumber, outStr);
+                }
+            );
+        }
+    );
+};
+
 document.addEventListener('textlayerrendered', function (event) {
     // was this the last page?
     if (event.detail.pageNumber === PDFViewerApplication.page) {

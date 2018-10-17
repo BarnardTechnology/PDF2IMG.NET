@@ -62,14 +62,28 @@ namespace PDF2IMGTest
 
         private static void PRender_OnPDFLoaded(object sender, EventArgs eventArgs)
         {
-            var contents = pRender.GetTextContentSync(1);
-            Console.WriteLine(contents[0].Text);
-
+            DateTime startTime = DateTime.Now;
             for (int i = 0; i < pRender.PageCount; i++)
             {
-                Console.WriteLine("Page " + (i + 1));
-                pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
+                var contents = pRender.GetTextContentSync(i + 1);
+                Console.WriteLine(contents[0].Text);
+                //Console.WriteLine("Page " + (i + 1));
+                //pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
             }
+            TimeSpan timeTaken = DateTime.Now - startTime;
+
+            startTime = DateTime.Now;
+            for (int i = 0; i < pRender.PageCount; i++)
+            {
+                string text = pRender.GetTextSync(i + 1);
+                Console.WriteLine(text);
+                //Console.WriteLine("Page " + (i + 1));
+                //pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
+            }
+            TimeSpan timeTaken2 = DateTime.Now - startTime;
+
+            Console.WriteLine("GetTextContentSync took " + timeTaken.TotalMilliseconds + "ms.");
+            Console.WriteLine("GetTextSync took " + timeTaken2.TotalMilliseconds + "ms.");
         }
 
         private static void PRender_OnPageRendered(object sender, PageRenderedEventArgs eventArgs)
