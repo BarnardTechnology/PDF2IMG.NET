@@ -29,6 +29,7 @@ namespace BarnardTech.PDF2IMG
         private Action _onReady;
         AutoResetEvent paintEvent = new AutoResetEvent(false);
         ManualResetEvent renderEvent = new ManualResetEvent(false);
+        ManualResetEvent pageRenderedEvent = new ManualResetEvent(false);
 
         private bool _pdfLoadWaiting = false;
         //private Action _pdfLoadedCallback = null;
@@ -36,9 +37,11 @@ namespace BarnardTech.PDF2IMG
         public int PageCount = 0;
         public int CurrentPageNumber = 0;
         private List<InternalTextContent> textContents = new List<InternalTextContent>();
+        Thread browserThread;
 
         public PageRenderer(Action OnReady = null)
         {
+            
             _onReady = OnReady;
             //AppDomain.CurrentDomain.AssemblyResolve += Resolver;
 
@@ -58,13 +61,18 @@ namespace BarnardTech.PDF2IMG
                 Cef.Initialize(settings);
             }
 
-            cefBrowser = new ChromiumWebBrowser("pdfviewer://host/web/pdfcapture.html");
-            //cefBrowser = new ChromiumWebBrowser("http://www.google.com/");
-            //cefBrowser.RenderHandler = new CefRenderHandler(cefBrowser);
-            cefBrowser.LoadingStateChanged += CefBrowser_LoadingStateChanged;
-            cefBrowser.Paint += CefBrowser_Paint;
-            cefBrowser.Size = new Size(1024, 768);
-            cefBrowser.RegisterJsObject("viewerCallback", new viewerCallback(cefBrowser, this));
+            browserThread = new Thread(() =>
+            {
+                cefBrowser = new ChromiumWebBrowser("pdfviewer://host/web/pdfcapture.html");
+                //cefBrowser = new ChromiumWebBrowser("http://www.google.com/");
+                //cefBrowser.RenderHandler = new CefRenderHandler(cefBrowser);
+                cefBrowser.LoadingStateChanged += CefBrowser_LoadingStateChanged;
+                cefBrowser.Paint += CefBrowser_Paint;
+                cefBrowser.Size = new Size(1024, 768);
+                cefBrowser.RegisterJsObject("viewerCallback", new viewerCallback(cefBrowser, this));
+            });
+
+            browserThread.Start();
         }
 
         public void GetTextContent(int pageNumber)
@@ -93,17 +101,31 @@ namespace BarnardTech.PDF2IMG
                 });
             }
 
-            OnGotTextContent(this, new TextContentEventArgs()
+            new Task(() =>
             {
-                PageNumber = pageNumber,
-                TextContent = textContents,
-                Viewport = tContent.viewport
+                OnGotTextContent(this, new TextContentEventArgs()
+                {
+                    PageNumber = pageNumber,
+                    TextContent = textContents,
+                    Viewport = tContent.viewport
+                });
             });
+        }
+
+        public Bitmap RenderPageSync(int pageNumber)
+        {
+            //new Task(() =>
+            //{
+                GotoPage(pageNumber);
+            //}).Start();
+            pageRenderedEvent.Reset();
+            pageRenderedEvent.WaitOne();
+            return GetPage();
         }
 
         private void CefBrowser_Paint(object sender, OnPaintEventArgs e)
         {
-            //Console.WriteLine("PAINT");
+            Console.WriteLine("PAINT");
             paintEvent.Set();
         }
 
@@ -146,7 +168,10 @@ namespace BarnardTech.PDF2IMG
             //}
             if (OnPDFLoaded != null)
             {
-                OnPDFLoaded(this, new EventArgs());
+                new Task(() =>
+                {
+                    OnPDFLoaded(this, new EventArgs());
+                }).Start();
             }
         }
 
@@ -170,7 +195,8 @@ namespace BarnardTech.PDF2IMG
             new Task(() =>
             {
                 renderEvent.WaitOne(1000);
-                paintEvent.WaitOne();
+                while (paintEvent.WaitOne(500)) ; // this is a bit flaky - basically we want to keep waiting until we no longer get any paint events
+                pageRenderedEvent.Set();
                 OnPageRendered(this, new PageRenderedEventArgs()
                 {
                     PageNumber = pageNumber,

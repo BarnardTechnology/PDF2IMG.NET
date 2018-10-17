@@ -62,13 +62,18 @@ namespace PDF2IMGTest
 
         private static void PRender_OnPDFLoaded(object sender, EventArgs eventArgs)
         {
-            pRender.GotoPage(1);
-            pRender.GetTextContent(1);
+            //pRender.GotoPage(1);
+            //pRender.GetTextContent(1);
+            for (int i = 0; i < pRender.PageCount; i++)
+            {
+                Console.WriteLine("Page " + (i + 1));
+                pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
+            }
         }
 
         private static void PRender_OnPageRendered(object sender, PageRenderedEventArgs eventArgs)
         {
-            if (eventArgs.PageImage != null)
+            /*if (eventArgs.PageImage != null)
             {
                 Console.WriteLine("Saving...");
                 eventArgs.PageImage.Save("capture_" + eventArgs.PageNumber + ".png");
@@ -78,10 +83,10 @@ namespace PDF2IMGTest
                 Console.WriteLine("Can't save?");
             }
 
-            //if (eventArgs.PageNumber < pRender.PageCount)
-            //{
-                //pRender.GotoPage(pageNumber + 1);
-            //}
+            if (eventArgs.PageNumber < pRender.PageCount)
+            {
+                pRender.GotoPage(eventArgs.PageNumber + 1);
+            }*/
         }
 
         private static void PRender_OnGotTextContent(object sender, TextContentEventArgs eventArgs)
