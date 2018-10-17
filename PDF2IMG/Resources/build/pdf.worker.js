@@ -17826,7 +17826,7 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
           var pt = _util.Util.applyTransform([trm[4], trm[5]], textState.ctm);
           var x = pt[0];
           var y = pt[1];
-          textChunk.chars.push({ Character: chars[i], X: x, Y: y });
+          textChunk.chars.push({ Character: glyphs[i].unicode, X: x, Y: y });
 
           var tx = 0;
           var ty = 0;
