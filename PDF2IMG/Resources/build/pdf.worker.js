@@ -17754,9 +17754,13 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       function runBidiTransform(textChunk) {
         var str = textChunk.str.join('');
         var bidiResult = (0, _bidi.bidi)(str, -1, textChunk.vertical);
+
+        // Reset our chars array, otherwise it just keeps building up more and more results
+        var tChars = textChunk.chars;
+        textChunk.chars = [];
         return {
           str: normalizeWhitespace ? replaceWhitespace(bidiResult.str) : bidiResult.str,
-          chars: textChunk.chars,
+          chars: tChars,
           dir: bidiResult.dir,
           width: textChunk.width,
           height: textChunk.height,
@@ -17773,9 +17777,7 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       function buildTextContentItem(chars) {
         var font = textState.font;
         var textChunk = ensureTextContentItem();
-        if (!Array.isArray(textChunk.chars)) {
-          textChunk.chars = [];
-        }
+
         var width = 0;
         var height = 0;
         var glyphs = font.charsToGlyphs(chars);
