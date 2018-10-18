@@ -39,6 +39,15 @@ namespace BarnardTech.PDF2IMG
             _pRender.gotTextContents(pageNumber, tContent);
         }
 
+        public void textContentCallback(int pageNumber, string contentJSON, string callbackID)
+        {
+            new System.Threading.Tasks.Task(() =>
+            {
+                InternalTextContent tContent = JsonConvert.DeserializeObject<InternalTextContent>(contentJSON);
+                _pRender.gotTextContentsCallback(pageNumber, tContent, callbackID);
+            }).Start();
+        }
+
         public void textOnly(int pageNumber, string text)
         {
             _pRender.gotText(pageNumber, text);

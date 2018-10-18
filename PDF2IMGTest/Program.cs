@@ -66,8 +66,8 @@ namespace PDF2IMGTest
             for (int i = 0; i < pRender.PageCount; i++)
             {
                 var contents = pRender.GetTextContentSync(i + 1);
-                Console.WriteLine(contents[0].Text);
-                //Console.WriteLine("Page " + (i + 1));
+                //Console.WriteLine(contents[0].Text);
+                Console.WriteLine("Page " + (i + 1));
                 //pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
             }
             TimeSpan timeTaken = DateTime.Now - startTime;
@@ -76,41 +76,50 @@ namespace PDF2IMGTest
             for (int i = 0; i < pRender.PageCount; i++)
             {
                 string text = pRender.GetTextSync(i + 1);
-                Console.WriteLine(text);
-                //Console.WriteLine("Page " + (i + 1));
+                //Console.WriteLine(text);
+                Console.WriteLine("Page " + (i + 1));
                 //pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
             }
             TimeSpan timeTaken2 = DateTime.Now - startTime;
 
             Console.WriteLine("GetTextContentSync took " + timeTaken.TotalMilliseconds + "ms.");
             Console.WriteLine("GetTextSync took " + timeTaken2.TotalMilliseconds + "ms.");
+
+            _startTime = DateTime.Now;
+            for (int i = 0; i < pRender.PageCount; i++)
+            {
+                GetTextContents(i);
+            }
+        }
+
+        private static DateTime _startTime;
+        private static int pageCount = 0;
+
+        static Dictionary<int, List<TextContentItem>> contents = new Dictionary<int, List<TextContentItem>>();
+
+        private static void GetTextContents(int pageNumber)
+        {
+            pRender.GetTextContentAsync(pageNumber + 1, (textContent) =>
+            {
+                Console.WriteLine("Got page " + pageNumber);
+                contents.Add(pageNumber, textContent);
+                pageCount++;
+
+                if(pageCount == pRender.PageCount)
+                {
+                    Console.WriteLine("GetTextContentsAsync took " + (DateTime.Now - _startTime).TotalMilliseconds + "ms.");
+                }
+            });
         }
 
         private static void PRender_OnPageRendered(object sender, PageRenderedEventArgs eventArgs)
         {
-            /*if (eventArgs.PageImage != null)
-            {
-                Console.WriteLine("Saving...");
-                eventArgs.PageImage.Save("capture_" + eventArgs.PageNumber + ".png");
-            }
-            else
-            {
-                Console.WriteLine("Can't save?");
-            }
 
-            if (eventArgs.PageNumber < pRender.PageCount)
-            {
-                pRender.GotoPage(eventArgs.PageNumber + 1);
-            }*/
         }
 
         private static void PRender_OnGotTextContent(object sender, TextContentEventArgs eventArgs)
         {
-            Console.WriteLine("Got text content!");
-            foreach (TextContentItem item in eventArgs.TextContent)
-            {
-                Console.WriteLine(item.Text);
-            }
+
         }
 
         static void TestGSConversion(string[] args)

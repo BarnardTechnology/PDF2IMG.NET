@@ -94,6 +94,18 @@ namespace BarnardTech.PDF2IMG
             }
         }
 
+        Dictionary<string, Action<List<TextContentItem>>> textContentCallbacks = new Dictionary<string, Action<List<TextContentItem>>>();
+
+        public void GetTextContentAsync(int pageNumber, Action<List<TextContentItem>> successCallback)
+        {
+            if (pageNumber > 0 && pageNumber <= PageCount)
+            {
+                string callbackID = Guid.NewGuid().ToString();
+                textContentCallbacks.Add(callbackID, successCallback);
+                cefBrowser.ExecuteScriptAsync("getTextContentWithCallback", new[] { pageNumber.ToString(), callbackID });
+            }
+        }
+
         public string GetTextSync(int pageNumber)
         {
             if (pageNumber > 0 && pageNumber <= PageCount)
@@ -121,6 +133,30 @@ namespace BarnardTech.PDF2IMG
         {
             currentText = text;
             textReady.Set();
+        }
+
+        internal void gotTextContentsCallback(int pageNumber, InternalTextContent tContent, string callbackID)
+        {
+            if(textContentCallbacks.ContainsKey(callbackID))
+            {
+                List<TextContentItem> textContents = new List<TextContentItem>();
+                foreach (InternalTextContentItem item in tContent.items)
+                {
+                    textContents.Add(new TextContentItem()
+                    {
+                        Text = item.str,
+                        Direction = item.dir == "rtl" ? TextDirection.RightToLeft : TextDirection.LeftToRight,
+                        Width = item.width,
+                        Height = item.height,
+                        X = item.transform[4],
+                        Y = item.transform[5],
+                        FontName = item.fontName,
+                        Chars = item.chars
+                    });
+                }
+                textContentCallbacks[callbackID](textContents);
+                textContentCallbacks.Remove(callbackID);
+            }
         }
 
         internal void gotTextContents(int pageNumber, InternalTextContent tContent)

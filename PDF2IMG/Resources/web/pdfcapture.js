@@ -46,6 +46,20 @@ window.getTextContent = function (pageNumber) {
     );
 };
 
+window.getTextContentWithCallback = function (pageNumber, callbackid) {
+    pageNumber = parseInt(pageNumber);
+    PDFViewerApplication.pdfDocument.getPage(pageNumber).then(
+        (page) => {
+            page.getTextContent().then(
+                (content) => {
+                    content.viewport = page.getViewport(1);
+                    viewerCallback.textContentCallback(pageNumber, JSON.stringify(content), callbackid);
+                }
+            );
+        }
+    );
+};
+
 window.getText = function (pageNumber) {
     pageNumber = parseInt(pageNumber);
     PDFViewerApplication.pdfDocument.getPage(pageNumber).then(
