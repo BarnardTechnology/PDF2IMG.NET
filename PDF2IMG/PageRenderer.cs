@@ -27,6 +27,7 @@ namespace BarnardTech.PDF2IMG
         ChromiumWebBrowser cefBrowser;
         public bool IsReady { get; private set; } = false;
         private Action _onReady;
+        AutoResetEvent pdfLoadEvent = new AutoResetEvent(false);
         AutoResetEvent paintEvent = new AutoResetEvent(false);
         ManualResetEvent renderEvent = new ManualResetEvent(false);
         ManualResetEvent pageRenderedEvent = new ManualResetEvent(false);
@@ -34,8 +35,6 @@ namespace BarnardTech.PDF2IMG
         string currentText = "";
 
         private bool _pdfLoadWaiting = false;
-        //private Action _pdfLoadedCallback = null;
-        //private Action<int> _pageRenderedCallback = null;
         public int PageCount = 0;
         public int CurrentPageNumber = 0;
         private List<InternalTextContent> textContents = new List<InternalTextContent>();
@@ -44,7 +43,6 @@ namespace BarnardTech.PDF2IMG
         public PageRenderer(Action OnReady = null)
         {
             _onReady = OnReady;
-            //AppDomain.CurrentDomain.AssemblyResolve += Resolver;
 
             FileResourceHandlerFactory fileResourceHandlerFactory = new FileResourceHandlerFactory("pdfviewer", "host", Directory.GetCurrentDirectory());
 
@@ -177,15 +175,18 @@ namespace BarnardTech.PDF2IMG
                 });
             }
 
-            new Task(() =>
+            if (OnGotTextContent != null)
             {
-                OnGotTextContent(this, new TextContentEventArgs()
+                new Task(() =>
                 {
-                    PageNumber = pageNumber,
-                    TextContent = textContents,
-                    Viewport = tContent.viewport
-                });
-            }).Start();
+                    OnGotTextContent(this, new TextContentEventArgs()
+                    {
+                        PageNumber = pageNumber,
+                        TextContent = textContents,
+                        Viewport = tContent.viewport
+                    });
+                }).Start();
+            }
 
             currentTextContents = textContents;
             textContentsReady.Set();
@@ -193,10 +194,7 @@ namespace BarnardTech.PDF2IMG
 
         public Bitmap RenderPageSync(int pageNumber)
         {
-            //new Task(() =>
-            //{
-                GotoPage(pageNumber);
-            //}).Start();
+            GotoPage(pageNumber);
             pageRenderedEvent.Reset();
             pageRenderedEvent.WaitOne();
             return GetPage();
@@ -204,20 +202,33 @@ namespace BarnardTech.PDF2IMG
 
         private void CefBrowser_Paint(object sender, OnPaintEventArgs e)
         {
-            //Console.WriteLine("PAINT");
             paintEvent.Set();
         }
 
-        public void LoadPDF(string filename)//, Action pdfLoaded, Action<int> pageRendered)
+        public void LoadPDF(string filename)
         {
             if (!_pdfLoadWaiting)
             {
                 _pdfLoadWaiting = true;
-                //_pdfLoadedCallback = pdfLoaded;
-                //_pageRenderedCallback = pageRendered;
                 var buffer = File.ReadAllBytes(filename);
                 var asBase64 = Convert.ToBase64String(buffer);
                 cefBrowser.ExecuteScriptAsync("openPdfAsBase64", new[] { asBase64 });
+            }
+            else
+            {
+                throw new Exception("A PDF file is already waiting to be loaded.");
+            }
+        }
+
+        public void LoadPDFSync(string filename)
+        {
+            if (!_pdfLoadWaiting)
+            {
+                _pdfLoadWaiting = true;
+                var buffer = File.ReadAllBytes(filename);
+                var asBase64 = Convert.ToBase64String(buffer);
+                cefBrowser.ExecuteScriptAsync("openPdfAsBase64", new[] { asBase64 });
+                pdfLoadEvent.WaitOne();
             }
             else
             {
@@ -241,10 +252,6 @@ namespace BarnardTech.PDF2IMG
         {
             renderEvent.Reset();
             PageCount = numPages;
-            //if(_pdfLoadedCallback != null)
-            //{
-            //    _pdfLoadedCallback();
-            //}
             if (OnPDFLoaded != null)
             {
                 new Task(() =>
@@ -252,6 +259,7 @@ namespace BarnardTech.PDF2IMG
                     OnPDFLoaded(this, new EventArgs());
                 }).Start();
             }
+            pdfLoadEvent.Set();
         }
 
         internal void OnPageOpened(PageViewport viewport, int pageNumber)
@@ -260,27 +268,19 @@ namespace BarnardTech.PDF2IMG
             cefBrowser.Size = new Size((int)Math.Round(viewport.width), (int)Math.Round(viewport.height));
             _pdfLoadWaiting = false;
             renderEvent.Reset();
-            /*if (_pageRenderedCallback != null)
-            {
-                new Task(() =>
-                {
-                    // wait for render first
-                    renderEvent.WaitOne(1000); // sometimes a render doesn't happen - we need to fine-tune this.
-                    // then wait for the paint that happens after the render
-                    paintEvent.WaitOne();
-                    _pageRenderedCallback(CurrentPageNumber);
-                }).Start();
-            }*/
             new Task(() =>
             {
                 renderEvent.WaitOne(1000);
                 while (paintEvent.WaitOne(500)) ; // this is a bit flaky but seems to work - basically we want to keep waiting until we no longer get any paint events
                 pageRenderedEvent.Set();
-                OnPageRendered(this, new PageRenderedEventArgs()
+                if (OnPageRendered != null)
                 {
-                    PageNumber = pageNumber,
-                    PageImage = GetPage()
-                });
+                    OnPageRendered(this, new PageRenderedEventArgs()
+                    {
+                        PageNumber = pageNumber,
+                        PageImage = GetPage()
+                    });
+                }
             }).Start();
         }
 
