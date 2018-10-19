@@ -37,6 +37,8 @@ class Program
 			// Render the first page to a bitmap
 			Bitmap bmp = p.RenderPageSync(1);
 		});
+
+		Console.ReadLine(); // just stop the console app from ending straight away.
 	}
 }
 ```

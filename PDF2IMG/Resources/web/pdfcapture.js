@@ -23,12 +23,16 @@ window.openPdfAsBase64 = function (base64) {
     });
 };
 
-window.setCurrentPage = function (pageNumber) {
+window.setCurrentPage = function (pageNumber, pageScale) {
     pageNumber = parseInt(pageNumber);
+    pageScale = parseFloat(pageScale);
     console.log('setting page number to: ' + pageNumber);
     PDFViewerApplication.pdfViewer.currentPageNumber = pageNumber;
     PDFViewerApplication.pdfDocument.getPage(pageNumber).then((page) => {
-        viewerCallback.pageOpened(JSON.stringify(page.getViewport(1)), pageNumber);
+        var viewport = page.getViewport(1);
+        viewport.width = viewport.width * pageScale;
+        viewport.height = viewport.height * pageScale;
+        viewerCallback.pageOpened(JSON.stringify(viewport), pageNumber);
     }, 10);
 };
 

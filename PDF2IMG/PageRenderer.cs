@@ -192,9 +192,9 @@ namespace BarnardTech.PDF2IMG
             textContentsReady.Set();
         }
 
-        public Bitmap RenderPageSync(int pageNumber)
+        public Bitmap RenderPageSync(int pageNumber, double pageScale)
         {
-            GotoPage(pageNumber);
+            GotoPage(pageNumber, pageScale);
             pageRenderedEvent.Reset();
             pageRenderedEvent.WaitOne();
             return GetPage();
@@ -236,9 +236,9 @@ namespace BarnardTech.PDF2IMG
             }
         }
 
-        public void GotoPage(int pageNumber)
+        public void GotoPage(int pageNumber, double pageScale = 1.0)
         {
-            cefBrowser.ExecuteScriptAsync("setCurrentPage", new[] { pageNumber.ToString() });
+            cefBrowser.ExecuteScriptAsync("setCurrentPage", new[] { pageNumber.ToString(), pageScale.ToString() });
         }
 
         internal void OnPdfRendered(int pageNumber)
