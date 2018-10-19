@@ -15,6 +15,8 @@ The namespaces and class names are a bit all over the place due to the amount of
 
 Expect this to change and improve somewhat as I sort out a proper structure and introduce better Async methods.
 
+Note that you need to have your project set to x86 or x64 - this is a CefSharp limitation, there is a workaround documented at the CefSharp repo.
+
 For now, your basic syntax is:
 
 ```
@@ -44,3 +46,5 @@ class Program
 Currently, the renderer only provides pages at one specific height/width - this is whatever the dimensions are of the PDF with a scale set to 1. Usually, it'll create a page somewhere in the region of 600 pixels wide and 800 pixels high.
 
 There are asynchronous methods which offer better performance for bulk page conversion, but if you try to call multiple page renders at the same time, it's likely there will be a clash in the rendering process. Therefore, it's better to use the Sync methods until I've written this code out properly and trapped a few potential error scenarios.
+
+AnyCPU builds are difficult to support - I've only tested with x64. Potentially I may move away from CefSharp to make this easier to set up and use.
