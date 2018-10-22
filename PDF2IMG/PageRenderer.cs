@@ -84,8 +84,8 @@ namespace BarnardTech.PDF2IMG
                 CurrentPageNumber = pageNumber;
                 chromePage.SetViewportAsync(new ViewPortOptions()
                 {
-                    Width = (int)Math.Round(viewport.width),
-                    Height = (int)Math.Round(viewport.height)
+                    Width = (int)Math.Floor(viewport.width - 1),
+                    Height = (int)Math.Floor(viewport.height)
                 });
                 _pdfLoadWaiting = false;
                 renderEvent.Set();

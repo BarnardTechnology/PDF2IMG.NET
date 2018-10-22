@@ -41,7 +41,7 @@ namespace PDF2IMGTest
                 Console.WriteLine("Page " + (i + 1));
             }
 
-            Console.WriteLine("Getting details text contents...");
+            Console.WriteLine("Getting detailed text contents...");
             for (int i = 0; i < pRender.PageCount; i++)
             {
                 var contents = await pRender.GetTextContentAsync(i);
@@ -51,7 +51,7 @@ namespace PDF2IMGTest
             Console.WriteLine("Getting page images...");
             for (int i = 0; i < pRender.PageCount; i++)
             {
-                (await pRender.RenderPageAsync(i, 2)).Save("capture_" + (i + 1) + ".png");
+                (await pRender.RenderPageAsync(i, 1)).Save("capture_" + (i + 1) + ".png");
             }
         }
 
