@@ -1,37 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using CefSharp.OffScreen;
 using Newtonsoft.Json;
 
 namespace BarnardTech.PDF2IMG
 {
     internal class viewerCallback
     {
-        private ChromiumWebBrowser _cefBrowser;
         private PageRenderer _pRender;
+        private PuppeteerSharp.Page _chromePage;
 
-        public viewerCallback(ChromiumWebBrowser cefBrowser, PageRenderer pRender)
+        public viewerCallback(PuppeteerSharp.Page page, PageRenderer pRender)
         {
-            _cefBrowser = cefBrowser;
+            _chromePage = page;
             _pRender = pRender;
         }
 
-        public void pdfLoaded(int numPages)
-        {
-            _pRender.OnPdfLoaded(numPages);
-        }
+        //public void pdfLoaded(int numPages)
+        //{
+        //    _pRender.OnPdfLoaded(numPages);
+        //}
 
         public void pageOpened(string viewportJSON, int pageNumber)
         {
-            PageViewport viewport = JsonConvert.DeserializeObject<PageViewport>(viewportJSON);
-            _pRender.OnPageOpened(viewport, pageNumber);
+            //PageViewport viewport = JsonConvert.DeserializeObject<PageViewport>(viewportJSON);
+            //_pRender.OnPageOpened(viewport, pageNumber);
         }
 
-        public void pdfRendered(int pageNumber)
-        {
-            _pRender.OnPdfRendered(pageNumber);
-        }
+        //public void pdfRendered(int pageNumber)
+        //{
+        //    _pRender.OnPdfRendered(pageNumber);
+        //}
 
         public void textContent(int pageNumber, string contentJSON)
         {

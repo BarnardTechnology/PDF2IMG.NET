@@ -16,11 +16,23 @@ namespace PDF2IMGTest
 
         static void Main(string[] args)
         {
-            pRender = new PageRenderer(() =>
+            //pRender = new PageRenderer(() =>
+            //{
+            //    Console.WriteLine("Page renderer ready.");
+            //    pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
+            //});
+
+            Task<PageRenderer> task = PageRenderer.Create(() =>
             {
-                Console.WriteLine("Page renderer ready.");
+                Console.WriteLine("Loading PDF");
                 pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
             });
+            //task.Start();
+            task.Wait();
+
+            pRender = task.Result;
+
+            //pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
 
             //pRender = new PageRenderer(() =>
             //{
@@ -60,56 +72,76 @@ namespace PDF2IMGTest
             Console.ReadLine();
         }
 
-        private static void PRender_OnPDFLoaded(object sender, EventArgs eventArgs)
+        private async static void PRender_OnPDFLoaded(object sender, EventArgs eventArgs)
         {
-            DateTime startTime = DateTime.Now;
-            for (int i = 0; i < pRender.PageCount; i++)
-            {
-                var contents = pRender.GetTextContentSync(i + 1);
-                //Console.WriteLine(contents[0].Text);
-                Console.WriteLine("Page " + (i + 1));
-                //pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
-            }
-            TimeSpan timeTaken = DateTime.Now - startTime;
+            Console.WriteLine("PDF Loaded!");
+            //Task<System.Drawing.Bitmap> tBmp = pRender.RenderPageSync(2, 2);
+            //tBmp.Wait();
+            //tBmp.Result.Save("capture_2.png");
 
-            startTime = DateTime.Now;
+
+            //pRender.GetTextContentAsync(1);
+
+            /*for (int i = 0; i < pRender.PageCount; i++)
+            {
+                pRender.RenderPage(i, 2).Save("capture_" + (i + 1) + ".png");
+            }*/
+
+
+            //DateTime startTime = DateTime.Now;
             for (int i = 0; i < pRender.PageCount; i++)
             {
-                string text = pRender.GetTextSync(i + 1);
+                var contents = await pRender.GetTextContentAsync(i);
+                Console.WriteLine("Page " + (i + 1));
+            }
+            ////TimeSpan timeTaken = DateTime.Now - startTime;
+
+            for (int i = 0; i < pRender.PageCount; i++)
+            {
+                var text = await pRender.GetTextAsync(i);
+                Console.WriteLine("Page " + (i + 1));
                 //Console.WriteLine(text);
-                Console.WriteLine("Page " + (i + 1));
-                //pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
             }
-            TimeSpan timeTaken2 = DateTime.Now - startTime;
 
-            Console.WriteLine("GetTextContentSync took " + timeTaken.TotalMilliseconds + "ms.");
-            Console.WriteLine("GetTextSync took " + timeTaken2.TotalMilliseconds + "ms.");
 
-            _startTime = DateTime.Now;
-            for (int i = 0; i < pRender.PageCount; i++)
-            {
-                GetTextContents(i);
-            }
+            //startTime = DateTime.Now;
+            //for (int i = 0; i < pRender.PageCount; i++)
+            //{
+            //    string text = pRender.GetTextSync(i + 1);
+            //    //Console.WriteLine(text);
+            //    Console.WriteLine("Page " + (i + 1));
+            //    //pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
+            //}
+            //TimeSpan timeTaken2 = DateTime.Now - startTime;
+
+            //Console.WriteLine("GetTextContentSync took " + timeTaken.TotalMilliseconds + "ms.");
+            //Console.WriteLine("GetTextSync took " + timeTaken2.TotalMilliseconds + "ms.");
+
+            //_startTime = DateTime.Now;
+            //for (int i = 0; i < pRender.PageCount; i++)
+            //{
+            //    GetTextContents(i);
+            //}
         }
 
-        private static DateTime _startTime;
-        private static int pageCount = 0;
+        //private static DateTime _startTime;
+        //private static int pageCount = 0;
 
         static Dictionary<int, List<TextContentItem>> contents = new Dictionary<int, List<TextContentItem>>();
 
         private static void GetTextContents(int pageNumber)
         {
-            pRender.GetTextContentAsync(pageNumber + 1, (textContent) =>
-            {
-                Console.WriteLine("Got page " + pageNumber);
-                contents.Add(pageNumber, textContent);
-                pageCount++;
+            //pRender.GetTextContentAsync(pageNumber + 1, (textContent) =>
+            //{
+            //    Console.WriteLine("Got page " + pageNumber);
+            //    contents.Add(pageNumber, textContent);
+            //    pageCount++;
 
-                if(pageCount == pRender.PageCount)
-                {
-                    Console.WriteLine("GetTextContentsAsync took " + (DateTime.Now - _startTime).TotalMilliseconds + "ms.");
-                }
-            });
+            //    if(pageCount == pRender.PageCount)
+            //    {
+            //        Console.WriteLine("GetTextContentsAsync took " + (DateTime.Now - _startTime).TotalMilliseconds + "ms.");
+            //    }
+            //});
         }
 
         private static void PRender_OnPageRendered(object sender, PageRenderedEventArgs eventArgs)

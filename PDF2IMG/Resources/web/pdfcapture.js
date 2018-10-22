@@ -1,6 +1,7 @@
 ﻿var startedLoading = false;
 
 window.openPdfAsBase64 = function (base64) {
+    console.log("openPdfAsBase64");
     startedLoading = true;
     var binary_string = window.atob(base64);
     var len = binary_string.length;
@@ -32,22 +33,24 @@ window.setCurrentPage = function (pageNumber, pageScale) {
         var viewport = page.getViewport(1);
         viewport.width = viewport.width * pageScale;
         viewport.height = viewport.height * pageScale;
-        viewerCallback.pageOpened(JSON.stringify(viewport), pageNumber);
+        pageOpened(JSON.stringify(viewport), pageNumber);
     }, 10);
 };
 
 window.getTextContent = function (pageNumber) {
-    pageNumber = parseInt(pageNumber);
-    PDFViewerApplication.pdfDocument.getPage(pageNumber).then(
-        (page) => {
-            page.getTextContent().then(
-                (content) => {
-                    content.viewport = page.getViewport(1);
-                    viewerCallback.textContent(pageNumber, JSON.stringify(content));
-                }
-            );
-        }
-    );
+    return new Promise((resolve, reject) => {
+        pageNumber = parseInt(pageNumber);
+        PDFViewerApplication.pdfDocument.getPage(pageNumber).then(
+            (page) => {
+                page.getTextContent().then(
+                    (content) => {
+                        content.viewport = page.getViewport(1);
+                        resolve(JSON.stringify(content));
+                    }
+                );
+            }
+        );
+    });
 };
 
 window.getTextContentWithCallback = function (pageNumber, callbackid) {
@@ -65,20 +68,22 @@ window.getTextContentWithCallback = function (pageNumber, callbackid) {
 };
 
 window.getText = function (pageNumber) {
-    pageNumber = parseInt(pageNumber);
-    PDFViewerApplication.pdfDocument.getPage(pageNumber).then(
-        (page) => {
-            page.getTextContent().then(
-                (content) => {
-                    var outStr = "";
-                    for (var i = 0; i < content.items.length; i++) {
-                        outStr += content.items[i].str + " ";
+    return new Promise((resolve, reject) => {
+        pageNumber = parseInt(pageNumber);
+        PDFViewerApplication.pdfDocument.getPage(pageNumber).then(
+            (page) => {
+                page.getTextContent().then(
+                    (content) => {
+                        var outStr = "";
+                        for (var i = 0; i < content.items.length; i++) {
+                            outStr += content.items[i].str + " ";
+                        }
+                        resolve(outStr);
                     }
-                    viewerCallback.textOnly(pageNumber, outStr);
-                }
-            );
-        }
-    );
+                );
+            }
+        );
+    });
 };
 
 document.addEventListener('textlayerrendered', function (event) {
@@ -87,11 +92,11 @@ document.addEventListener('textlayerrendered', function (event) {
         if (startedLoading) {
             console.log('Finished loading!');
             console.log("numPages: " + PDFViewerApplication.pdfDocument.numPages);
-            viewerCallback.pdfLoaded(PDFViewerApplication.pdfDocument.numPages);
+            pdfLoaded(PDFViewerApplication.pdfDocument.numPages);
             startedLoading = false;
         }
 
         console.log('Finished rendering!');
-        viewerCallback.pdfRendered(PDFViewerApplication.pdfViewer.currentPageNumber);
+        pdfRendered(PDFViewerApplication.pdfViewer.currentPageNumber);
     }
 }, true);
