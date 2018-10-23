@@ -1,52 +1,30 @@
 # PDF2IMG.NET
-PDF to PNG Converter Library for .Net, using GhostScript
+PDF to Image Converter Library for .Net, using PuppeteerSharp and PDF.JS
 
 This library is based on the [PDF2PNG](https://github.com/chen0040/cs-pdf-to-image) library by [@chen0040](https://github.com/chen0040).
 
 I've made some very minor improvements for my own usage, and wanted to put these changes up on NuGet, so I created a new repo for it.
 
-# UPDATE
+# UPDATE (version 1.5.1)
 
-This now has some pretty huge changes added to it - I've come up with an alternative solution to getting renders of PDF pages, using PDF.JS and CefSharp to render in an off-screen browser. The idea is, it should render identically to how a browser renders a PDF - but it is a bit more complicated!
+I've had some issues using CefSharp, which I think isn't really designed for the type of work I was trying to
+use it for - I had to hack it around a fair bit to get it running off-screen in the way I wanted.
 
-The namespaces and class names are a bit all over the place due to the amount of additional coding I added, so a future version will tidy this all up.
+So, I've switched over the PuppeteerSharp on the back-end and this seems to be playing quite nicely at the moment.
+
+Still very much a work-in-progress.
+
 
 # USAGE
 
-Expect this to change and improve somewhat as I sort out a proper structure and introduce better Async methods.
-
-Note that you need to have your project set to x86 or x64 - this is a CefSharp limitation, there is a workaround documented at the CefSharp repo.
-
-For now, your basic syntax is:
-
-```
-using System.Drawing;
-using BarnardTech.PDF2IMG;
-
-class Program
-{
-	static void Main(string[] args])
-	{
-		string filename = args[0];
-
-		PageRenderer p = null;
-		// Create the renderer and provide a callback Action that will fire when the renderer is ready
-		p = new PageRenderer(() => {
-			// Load the PDF file.
-			p.LoadPDFSync(filename);
-			// Render the first page to a bitmap
-			Bitmap bmp = p.RenderPageSync(1);
-		});
-
-		Console.ReadLine(); // just stop the console app from ending straight away.
-	}
-}
-```
+I'll put up a basic page render example once things have calmed down a bit in terms of how it all structurally
+fits together. Check out the Program.cs file in the PDF2IMGTest project for an idea of current usage.
 
 # Limitations
 
-Currently, the renderer only provides pages at one specific height/width - this is whatever the dimensions are of the PDF with a scale set to 1. Usually, it'll create a page somewhere in the region of 600 pixels wide and 800 pixels high.
+The previous limitations have been fixed (you can now create pages at different sizes, there are async and non-async
+methods for all major functions and AnyCPU is now supported).
 
-There are asynchronous methods which offer better performance for bulk page conversion, but if you try to call multiple page renders at the same time, it's likely there will be a clash in the rendering process. Therefore, it's better to use the Sync methods until I've written this code out properly and trapped a few potential error scenarios.
-
-AnyCPU builds are difficult to support - I've only tested with x64. Potentially I may move away from CefSharp to make this easier to set up and use.
+The major limitation at the moment is that I'm constantly messing about with the structure while I get this working
+in an efficient and programmer-friendly way, so basically, don't expect your code to work straight away from one
+version to the next, and the output could be buggy at times.
