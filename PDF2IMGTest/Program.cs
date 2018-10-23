@@ -54,32 +54,5 @@ namespace PDF2IMGTest
                 (await pRender.RenderPageAsync(i, 1)).Save("capture_" + (i + 1) + ".png");
             }
         }
-
-        static Dictionary<int, List<TextContentItem>> contents = new Dictionary<int, List<TextContentItem>>();
-
-        static void TestGSConversion(string[] args)
-        {
-            string pdf_filename = BarnardTech.Pdf2Image.GetProgramFilePath("compressed.tracemonkey-pldi-09.pdf");
-            string png_filename = BarnardTech.Pdf2Image.GetProgramFilePath("converted.png");
-
-            if (args.Length > 2)
-            {
-                pdf_filename = args[1];
-                png_filename = args[2];
-            }
-
-            List<string> errors = BarnardTech.Pdf2Image.Convert(pdf_filename, png_filename, BarnardTech.Pdf2Image.OutputFormat.png16m);
-            if (errors.Any())
-            {
-                foreach (string error in errors)
-                {
-                    Console.WriteLine(error);
-                }
-            }
-            else
-            {
-                Console.WriteLine("Conversion is successful.");
-            }
-        }
     }
 }
