@@ -45,7 +45,7 @@ for (int i = 0; i < pRender.PageCount; i++)
 
 Major problems I'm having at the moment are primarily around the page rendering when larger scales are used. In general,
 I'm finding that page scales of 2 and above are slowing down the rendering to a point where sometimes the browser hasn't
-finished the render before the capture is taken, leading to half-rendered pages being saves to disk.
+finished the render before the capture is taken, leading to half-rendered pages being saved to disk.
 
 A simple solution would be to set an arbitrary wait time before the render happens, and increase this wait time as the
 page size increases - but this would be haphazard to say the least. Ideally, I'll find some sort of event I can hook
