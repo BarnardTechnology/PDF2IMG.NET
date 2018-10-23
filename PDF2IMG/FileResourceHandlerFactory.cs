@@ -5,13 +5,12 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using CefSharp;
 
 using BarnardTech.PDF2IMG;
 
 namespace BarnardTech
 {
-    internal class FileResourceHandlerFactory : ISchemeHandlerFactory
+    internal class FileResourceHandlerFactory
     {
         private string scheme, host, folder, default_filename;
 
@@ -27,7 +26,7 @@ namespace BarnardTech
 
         private string[] manifestResourceNames = null;
 
-        private string get_content(Uri uri, out string extension)
+        public string get_content(Uri uri, out string extension)
         {
             var path = uri.LocalPath.Substring(1);
             path = string.IsNullOrWhiteSpace(path) ? this.default_filename : path;
@@ -72,12 +71,6 @@ namespace BarnardTech
             Console.WriteLine("Couldn't find " + uri.LocalPath);
             return "Not found.";
             //return File.ReadAllText(Path.Combine(this.folder, path));
-        }
-
-        IResourceHandler ISchemeHandlerFactory.Create(IBrowser browser, IFrame frame, string schemeName, IRequest request)
-        {
-            var uri = new Uri(request.Url);
-            return ResourceHandler.FromString(get_content(uri, out var extension), extension);
         }
     }
 }

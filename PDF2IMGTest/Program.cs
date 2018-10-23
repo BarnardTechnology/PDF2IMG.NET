@@ -16,111 +16,46 @@ namespace PDF2IMGTest
 
         static void Main(string[] args)
         {
-            pRender = new PageRenderer(() =>
+            Task<PageRenderer> task = PageRenderer.Create(() =>
             {
-                Console.WriteLine("Page renderer ready.");
+                Console.WriteLine("Loading PDF");
                 pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
             });
+            task.Wait();
 
-            //pRender = new PageRenderer(() =>
-            //{
-            //    Console.WriteLine("Page renderer ready.");
-
-            //    pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf", () =>
-            //    {
-            //        //pRender.GotoPage(1);
-            //        //pRender.GetTextContent(1);
-            //    },
-            //    (pageNumber) =>
-            //    {
-            //        //System.Drawing.Bitmap bmp = null;
-            //        //bmp = pRender.GetPage();
-
-            //        //if (bmp != null)
-            //        //{
-            //        //    Console.WriteLine("Saving...");
-            //        //    bmp.Save("capture_" + pageNumber + ".png");
-            //        //}
-            //        //else
-            //        //{
-            //        //    Console.WriteLine("Can't save?");
-            //        //}
-
-            //        //if(pageNumber < pRender.PageCount)
-            //        //{
-            //        //    //pRender.GotoPage(pageNumber + 1);
-            //        //}
-            //    });
-            //});
-
-            pRender.OnGotTextContent += PRender_OnGotTextContent;
-            pRender.OnPageRendered += PRender_OnPageRendered;
+            pRender = task.Result;
             pRender.OnPDFLoaded += PRender_OnPDFLoaded;
 
             Console.ReadLine();
         }
 
-        private static void PRender_OnPDFLoaded(object sender, EventArgs eventArgs)
+        private async static void PRender_OnPDFLoaded(object sender, EventArgs eventArgs)
         {
-            DateTime startTime = DateTime.Now;
+            Console.WriteLine("PDF Loaded!");
+
+
+            Console.WriteLine("Getting text on pages...");
             for (int i = 0; i < pRender.PageCount; i++)
             {
-                var contents = pRender.GetTextContentSync(i + 1);
-                //Console.WriteLine(contents[0].Text);
+                var text = await pRender.GetTextAsync(i);
                 Console.WriteLine("Page " + (i + 1));
-                //pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
             }
-            TimeSpan timeTaken = DateTime.Now - startTime;
 
-            startTime = DateTime.Now;
+            Console.WriteLine("Getting detailed text contents...");
             for (int i = 0; i < pRender.PageCount; i++)
             {
-                string text = pRender.GetTextSync(i + 1);
-                //Console.WriteLine(text);
+                var contents = await pRender.GetTextContentAsync(i);
                 Console.WriteLine("Page " + (i + 1));
-                //pRender.RenderPageSync(i + 1).Save("capture_" + (i + 1) + ".png");
             }
-            TimeSpan timeTaken2 = DateTime.Now - startTime;
 
-            Console.WriteLine("GetTextContentSync took " + timeTaken.TotalMilliseconds + "ms.");
-            Console.WriteLine("GetTextSync took " + timeTaken2.TotalMilliseconds + "ms.");
-
-            _startTime = DateTime.Now;
+            Console.WriteLine("Getting page images...");
             for (int i = 0; i < pRender.PageCount; i++)
             {
-                GetTextContents(i);
+                (await pRender.RenderPageAsync(i, 1)).Save("capture_" + (i + 1) + ".png");
             }
         }
-
-        private static DateTime _startTime;
-        private static int pageCount = 0;
 
         static Dictionary<int, List<TextContentItem>> contents = new Dictionary<int, List<TextContentItem>>();
-
-        private static void GetTextContents(int pageNumber)
-        {
-            pRender.GetTextContentAsync(pageNumber + 1, (textContent) =>
-            {
-                Console.WriteLine("Got page " + pageNumber);
-                contents.Add(pageNumber, textContent);
-                pageCount++;
-
-                if(pageCount == pRender.PageCount)
-                {
-                    Console.WriteLine("GetTextContentsAsync took " + (DateTime.Now - _startTime).TotalMilliseconds + "ms.");
-                }
-            });
-        }
-
-        private static void PRender_OnPageRendered(object sender, PageRenderedEventArgs eventArgs)
-        {
-
-        }
-
-        private static void PRender_OnGotTextContent(object sender, TextContentEventArgs eventArgs)
-        {
-
-        }
 
         static void TestGSConversion(string[] args)
         {
