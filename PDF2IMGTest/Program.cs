@@ -16,15 +16,10 @@ namespace PDF2IMGTest
 
         static void Main(string[] args)
         {
-            Task<PageRenderer> task = PageRenderer.Create(() =>
-            {
-                Console.WriteLine("Loading PDF");
-                pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
-            });
-            task.Wait();
-
-            pRender = task.Result;
+            pRender = new PageRenderer();
             pRender.OnPDFLoaded += PRender_OnPDFLoaded;
+            Console.WriteLine("Loading PDF");
+            pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
 
             Console.ReadLine();
         }

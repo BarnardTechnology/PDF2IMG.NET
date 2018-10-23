@@ -12,14 +12,10 @@ using PuppeteerSharp;
 namespace BarnardTech.PDF2IMG
 {
     public delegate void PDFLoadedDelegate(object sender, EventArgs eventArgs);
-    public delegate void TextContentDelegate(object sender, TextContentEventArgs eventArgs);
-    public delegate void PageRenderedDelegate(object sender, PageRenderedEventArgs eventArgs);
 
     public class PageRenderer : IDisposable
     {
-        public event TextContentDelegate OnGotTextContent;
         public event PDFLoadedDelegate OnPDFLoaded;
-        public event PageRenderedDelegate OnPageRendered;
 
         Browser chromeBrowser;
         Page chromePage;
@@ -31,17 +27,45 @@ namespace BarnardTech.PDF2IMG
         ManualResetEvent renderEvent = new ManualResetEvent(false);
         ManualResetEvent pageRenderedEvent = new ManualResetEvent(false);
         ManualResetEvent textReady = new ManualResetEvent(false);
-        string currentText = "";
 
         private bool _pdfLoadWaiting = false;
         public int PageCount = 0;
         public int CurrentPageNumber = 0;
         private List<InternalTextContent> textContents = new List<InternalTextContent>();
-        Thread browserThread;
 
         FileResourceHandlerFactory fileResourceHandlerFactory;
 
+        public PageRenderer()
+        {
+            AutoResetEvent readyEvent = new AutoResetEvent(false);
+
+            new Task(async () =>
+            {
+                await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
+
+                var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                {
+                    Headless = true
+                });
+
+                var page = await browser.NewPageAsync();
+                await page.SetRequestInterceptionAsync(true);
+
+                _init(browser, page, () =>
+                {
+                    readyEvent.Set();
+                });
+            }).Start();
+
+            readyEvent.WaitOne();
+        }
+
         private PageRenderer(Browser browser, Page page, Action onReady)
+        {
+            _init(browser, page, onReady);
+        }
+
+        private void _init(Browser browser, Page page, Action onReady)
         {
             _onReady = onReady;
             chromeBrowser = browser;
@@ -50,7 +74,6 @@ namespace BarnardTech.PDF2IMG
             page.Request += Page_Request;
             page.RequestFinished += Page_RequestFinished;
             page.Load += Page_Load;
-
 
             chromePage.ExposeFunctionAsync<int, int>("pdfLoaded", (numPages) =>
             {
@@ -98,10 +121,10 @@ namespace BarnardTech.PDF2IMG
         private void Page_Load(object sender, EventArgs e)
         {
             Console.WriteLine("Page load");
-            if(!readyFired)
+            if (!readyFired)
             {
                 readyFired = true;
-                if(_onReady != null)
+                if (_onReady != null)
                 {
                     _onReady();
                 }
@@ -123,7 +146,7 @@ namespace BarnardTech.PDF2IMG
             e.Request.RespondAsync(response);
         }
 
-        public async static Task<PageRenderer> Create(Action onReady)
+        public async static Task<PageRenderer> CreateAsync(Action onReady)
         {
             await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
 
@@ -138,9 +161,6 @@ namespace BarnardTech.PDF2IMG
             PageRenderer pR = new PageRenderer(browser, page, onReady);
             return pR;
         }
-
-        ManualResetEvent textContentsReady = new ManualResetEvent(false);
-        List<TextContentItem> currentTextContents = null;
 
         public List<TextContentItem> GetTextContent(int pageNumber)
         {
@@ -235,7 +255,7 @@ namespace BarnardTech.PDF2IMG
 
         public async Task<Bitmap> GetPage()
         {
-            if(chromePage != null)
+            if (chromePage != null)
             {
                 MemoryStream mStream = new MemoryStream(await chromePage.ScreenshotDataAsync());
                 mStream.Position = 0;
