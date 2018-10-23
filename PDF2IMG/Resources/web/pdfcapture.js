@@ -33,7 +33,7 @@ window.setCurrentPage = function (pageNumber, pageScale) {
         var viewport = page.getViewport(1);
         viewport.width = viewport.width * pageScale;
         viewport.height = viewport.height * pageScale;
-        pageOpened(JSON.stringify(viewport), pageNumber);
+        pageOpened(JSON.stringify(viewport), pageNumber, pageScale);
     }, 10);
 };
 

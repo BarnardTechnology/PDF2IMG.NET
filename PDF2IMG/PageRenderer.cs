@@ -100,14 +100,14 @@ namespace BarnardTech.PDF2IMG
                 return 0;
             });
 
-            chromePage.ExposeFunctionAsync<string, int, int>("pageOpened", (string viewportJSON, int pageNumber) =>
+            chromePage.ExposeFunctionAsync<string, int, double, int>("pageOpened", (string viewportJSON, int pageNumber, double pageScale) =>
             {
                 Console.WriteLine("PageOpened " + pageNumber);
                 PageViewport viewport = Newtonsoft.Json.JsonConvert.DeserializeObject<PageViewport>(viewportJSON);
                 CurrentPageNumber = pageNumber;
                 chromePage.SetViewportAsync(new ViewPortOptions()
                 {
-                    Width = (int)Math.Floor(viewport.width - 1),
+                    Width = (int)Math.Floor(viewport.width + Math.Round(pageScale)),
                     Height = (int)Math.Floor(viewport.height)
                 });
                 _pdfLoadWaiting = false;
@@ -133,7 +133,7 @@ namespace BarnardTech.PDF2IMG
 
         private void Page_RequestFinished(object sender, RequestEventArgs e)
         {
-            Console.WriteLine("Request finished - " + e.Request.Url);
+            
         }
 
         private void Page_Request(object sender, RequestEventArgs e)
@@ -221,7 +221,7 @@ namespace BarnardTech.PDF2IMG
         {
             renderEvent.Reset();
             GotoPage(pageNumber + 1, pageScale);
-            Task<Bitmap> tBmp = GetPage();
+            Task<Bitmap> tBmp = GetPage(pageScale);
             tBmp.Wait();
             return tBmp.Result;
         }
@@ -230,17 +230,24 @@ namespace BarnardTech.PDF2IMG
         {
             renderEvent.Reset();
             GotoPage(pageNumber + 1, pageScale);
-            return await GetPage();
+            return await GetPage(pageScale);
         }
 
         public void LoadPDF(string filename)
+        {
+            pdfLoadEvent.Reset();
+            LoadPDFAsync(filename);
+            pdfLoadEvent.WaitOne();
+        }
+
+        public async void LoadPDFAsync(string filename)
         {
             if (!_pdfLoadWaiting)
             {
                 _pdfLoadWaiting = true;
                 var buffer = File.ReadAllBytes(filename);
                 var asBase64 = Convert.ToBase64String(buffer);
-                chromePage.EvaluateFunctionAsync("openPdfAsBase64", new[] { asBase64 });
+                await chromePage.EvaluateFunctionAsync("openPdfAsBase64", new[] { asBase64 });
             }
             else
             {
@@ -253,13 +260,23 @@ namespace BarnardTech.PDF2IMG
             await chromePage.EvaluateFunctionAsync("setCurrentPage", new[] { pageNumber.ToString(), pageScale.ToString() });
         }
 
-        public async Task<Bitmap> GetPage()
+        public async Task<Bitmap> GetPage(double pageScale)
         {
             if (chromePage != null)
             {
                 MemoryStream mStream = new MemoryStream(await chromePage.ScreenshotDataAsync());
                 mStream.Position = 0;
-                return new Bitmap(mStream);
+                // our screenshot has a few extra pixels on the right to allow 'breathing space' for the PDF
+                // to display full-screen, so we need to remove that.
+                Bitmap screenShot = new Bitmap(mStream);
+                Bitmap outBmp = new Bitmap((int)(screenShot.Width - Math.Round(pageScale) - 1), screenShot.Height);
+                Graphics g = Graphics.FromImage(outBmp);
+                g.DrawImage(screenShot, 0, 0);
+                g.Dispose();
+                screenShot.Dispose();
+                mStream.Dispose();
+
+                return outBmp;
             }
             return null;
         }
