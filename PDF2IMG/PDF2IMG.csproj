@@ -7,7 +7,7 @@
     <PackageProjectUrl>https://github.com/BarnardTechnology/PDF2IMG.NET</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/BarnardTechnology/PDF2IMG.NET/blob/master/LICENSE</PackageLicenseUrl>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>1.5.4</Version>
+    <Version>1.5.5</Version>
     <Authors>PDF2IMG</Authors>
     <Description>Provides PDF to Bitmap functionality using PDF.JS and PuppeteerSharp in the background. Very much a work-in-progress.</Description>
     <RootNamespace>BarnardTech.PDF2IMG</RootNamespace>
@@ -306,6 +306,7 @@
     <None Remove="Resources\web\pdfcapture.css" />
     <None Remove="Resources\web\pdfcapture.html" />
     <None Remove="Resources\web\pdfcapture.js" />
+    <None Remove="Resources\web\pdfcapture2.html" />
     <None Remove="Resources\web\viewer.css" />
     <None Remove="Resources\web\viewer.html" />
     <None Remove="Resources\web\viewer.js" />
@@ -601,6 +602,7 @@
     <EmbeddedResource Include="Resources\web\pdfcapture.css" />
     <EmbeddedResource Include="Resources\web\pdfcapture.html" />
     <EmbeddedResource Include="Resources\web\pdfcapture.js" />
+    <EmbeddedResource Include="Resources\web\pdfcapture2.html" />
     <EmbeddedResource Include="Resources\web\viewer.css" />
     <EmbeddedResource Include="Resources\web\viewer.html" />
     <EmbeddedResource Include="Resources\web\viewer.js" />

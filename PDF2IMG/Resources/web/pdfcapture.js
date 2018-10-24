@@ -24,6 +24,22 @@ window.openPdfAsBase64 = function (base64) {
     });
 };
 
+window.getPageViewport = function (pageNumber, pageScale) {
+    return new Promise((resolve, reject) => {
+        pageNumber = parseInt(pageNumber);
+        pageScale = parseFloat(pageScale);
+        PDFViewerApplication.pdfDocument.getPage(pageNumber).then((page) => {
+            var viewport = page.getViewport(pageScale);
+            resolve(JSON.stringify(viewport));
+        });
+    });
+};
+
+window.gotoPage = function (pageNumber) {
+    pageNumber = parseInt(pageNumber);
+    PDFViewerApplication.pdfViewer.currentPageNumber = pageNumber;
+};
+
 window.setCurrentPage = function (pageNumber, pageScale) {
     pageNumber = parseInt(pageNumber);
     pageScale = parseFloat(pageScale);

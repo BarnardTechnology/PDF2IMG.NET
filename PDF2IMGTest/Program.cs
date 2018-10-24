@@ -32,8 +32,7 @@ namespace PDF2IMGTest
         private async static void PRender_OnPDFLoaded(object sender, EventArgs eventArgs)
         {
             Console.WriteLine("PDF Loaded!");
-
-
+            
             Console.WriteLine("Getting text on pages...");
             for (int i = 0; i < pRender.PageCount; i++)
             {

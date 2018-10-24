@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="../build/pdf.js"></script>
+</head>
+<body style="overflow: hidden;">
+    <div style="position: absolute; top: 0px; left: 0px; right: 0px; bottom: 0px;">
+        <canvas id="renderCanvas"></canvas>
+    </div>
+    <script>
+        var pdfDocument;
+        var renderCanvas = document.getElementById("renderCanvas");
+        var context = renderCanvas.getContext("2d");
+
+        window.openPdfAsBase64 = function (base64) {
+            return new Promise((resolve, reject) => {
+                var binary_string = window.atob(base64);
+                var len = binary_string.length;
+                var bytes = new Uint8Array(len);
+                for (var i = 0; i < len; i++) {
+                    bytes[i] = binary_string.charCodeAt(i);
+                }
+
+                PDFJS.getDocument(bytes).then(function (pdf) {
+                    pdfDocument = pdf;
+                    console.log("PDF Loaded!");
+                    console.log(pdf);
+                    resolve(pdf.numPages);
+                });
+            });
+        };
+
+        window.getPageViewport = function (pageNumber, pageScale) {
+            return new Promise((resolve, reject) => {
+                pageNumber = parseInt(pageNumber);
+                pageScale = parseFloat(pageScale);
+                pdfDocument.getPage(pageNumber).then((page) => {
+                    var viewport = page.getViewport(pageScale);
+                    resolve(JSON.stringify(viewport));
+                });
+            });
+        };
+
+        window.renderPage = function (pageNumber, pageScale) {
+            return new Promise((resolve, reject) => {
+                pageNumber = parseInt(pageNumber);
+                pageScale = parseFloat(pageScale);
+                console.log("Rendering page " + pageNumber);
+                pdfDocument.getPage(pageNumber).then(function (page) {
+                    var viewport = page.getViewport(pageScale);
+                    renderCanvas.width = viewport.width;
+                    renderCanvas.height = viewport.height;
+
+                    var renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+
+                    page.render(renderContext).promise.then(() => {
+                        console.log('page rendered');
+                        resolve(true);
+                    });
+                });
+            });
+        };
+
+        window.getTextContent = function (pageNumber) {
+            return new Promise((resolve, reject) => {
+                pageNumber = parseInt(pageNumber);
+                pdfDocument.getPage(pageNumber).then(
+                    (page) => {
+                        page.getTextContent().then(
+                            (content) => {
+                                content.viewport = page.getViewport(1);
+                                resolve(JSON.stringify(content));
+                            }
+                        );
+                    }
+                );
+            });
+        };
+
+        window.getText = function (pageNumber) {
+            return new Promise((resolve, reject) => {
+                pageNumber = parseInt(pageNumber);
+                pdfDocument.getPage(pageNumber).then(
+                    (page) => {
+                        page.getTextContent().then(
+                            (content) => {
+                                var outStr = "";
+                                for (var i = 0; i < content.items.length; i++) {
+                                    outStr += content.items[i].str + " ";
+                                }
+                                resolve(outStr);
+                            }
+                        );
+                    }
+                );
+            });
+        };
+    </script>
+</body>
+</html>

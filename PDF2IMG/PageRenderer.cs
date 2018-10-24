@@ -75,47 +75,47 @@ namespace BarnardTech.PDF2IMG
             page.RequestFinished += Page_RequestFinished;
             page.Load += Page_Load;
 
-            chromePage.ExposeFunctionAsync<int, int>("pdfLoaded", (numPages) =>
-            {
-                Console.WriteLine("pdfLoaded");
-                renderEvent.Reset();
-                PageCount = numPages;
-                if (OnPDFLoaded != null)
-                {
-                    new Task(() =>
-                    {
-                        OnPDFLoaded(this, new EventArgs());
-                    }).Start();
-                }
-                pdfLoadEvent.Set();
-                return 0;
-            });
+            //chromePage.ExposeFunctionAsync<int, int>("pdfLoaded", (numPages) =>
+            //{
+            //    Console.WriteLine("pdfLoaded");
+            //    renderEvent.Reset();
+            //    PageCount = numPages;
+            //    if (OnPDFLoaded != null)
+            //    {
+            //        new Task(() =>
+            //        {
+            //            OnPDFLoaded(this, new EventArgs());
+            //        }).Start();
+            //    }
+            //    pdfLoadEvent.Set();
+            //    return 0;
+            //});
 
-            chromePage.ExposeFunctionAsync<int, int>("pdfRendered", (pageNumber) =>
-            {
-                Console.WriteLine("pdfRendered");
-                CurrentPageNumber = pageNumber;
-                paintEvent.Reset();
-                renderEvent.Set();
-                return 0;
-            });
+            //chromePage.ExposeFunctionAsync<int, int>("pdfRendered", (pageNumber) =>
+            //{
+            //    Console.WriteLine("pdfRendered");
+            //    CurrentPageNumber = pageNumber;
+            //    paintEvent.Reset();
+            //    renderEvent.Set();
+            //    return 0;
+            //});
 
-            chromePage.ExposeFunctionAsync<string, int, double, int>("pageOpened", (string viewportJSON, int pageNumber, double pageScale) =>
-            {
-                Console.WriteLine("PageOpened " + pageNumber);
-                PageViewport viewport = Newtonsoft.Json.JsonConvert.DeserializeObject<PageViewport>(viewportJSON);
-                CurrentPageNumber = pageNumber;
-                chromePage.SetViewportAsync(new ViewPortOptions()
-                {
-                    Width = (int)Math.Floor(viewport.width + Math.Round(pageScale)),
-                    Height = (int)Math.Floor(viewport.height)
-                });
-                _pdfLoadWaiting = false;
-                renderEvent.Set();
-                return 0;
-            });
+            //chromePage.ExposeFunctionAsync<string, int, double, int>("pageOpened", (string viewportJSON, int pageNumber, double pageScale) =>
+            //{
+            //    PageViewport viewport = Newtonsoft.Json.JsonConvert.DeserializeObject<PageViewport>(viewportJSON);
+            //    Console.WriteLine("PageOpened " + pageNumber + ": " + viewport.width + ", " + viewport.height);
+            //    CurrentPageNumber = pageNumber;
+            //    chromePage.SetViewportAsync(new ViewPortOptions()
+            //    {
+            //        Width = (int)Math.Floor(viewport.width + Math.Round(pageScale)),
+            //        Height = (int)Math.Floor(viewport.height)
+            //    });
+            //    _pdfLoadWaiting = false;
+            //    renderEvent.Set();
+            //    return 0;
+            //});
 
-            page.GoToAsync("http://host/web/pdfcapture.html");
+            page.GoToAsync("http://host/web/pdfcapture2.html");
         }
 
         private void Page_Load(object sender, EventArgs e)
@@ -219,17 +219,47 @@ namespace BarnardTech.PDF2IMG
 
         public Bitmap RenderPage(int pageNumber, double pageScale)
         {
-            renderEvent.Reset();
-            GotoPage(pageNumber + 1, pageScale);
-            Task<Bitmap> tBmp = GetPage(pageScale);
-            tBmp.Wait();
-            return tBmp.Result;
+            //Task<PageViewport> t = GetPageViewport(pageNumber + 1, (float)pageScale);
+            //t.Wait();
+            //PageViewport viewport = t.Result;
+            //Console.WriteLine("VIEWPORT: " + viewport.width + "x" + viewport.height);
+            //chromePage.EvaluateFunctionAsync("gotoPage", new[] { pageNumber.ToString() });
+            //renderEvent.Reset();
+            //chromePage.SetViewportAsync(new ViewPortOptions()
+            //{
+            //    Width = (int)Math.Round(viewport.width + 1 + pageScale),
+            //    Height = (int)Math.Round(viewport.height)
+            //});
+            //renderEvent.WaitOne();
+            //Task<Bitmap> tBmp = GetPage(pageScale);
+            //tBmp.Wait();
+            //return tBmp.Result;
+            Task<Bitmap> t = RenderPageAsync(pageNumber, pageScale);
+            t.Wait();
+            return t.Result;
         }
 
         public async Task<Bitmap> RenderPageAsync(int pageNumber, double pageScale)
         {
+            PageViewport viewport = await GetPageViewport(pageNumber + 1, (float)pageScale);
             renderEvent.Reset();
-            GotoPage(pageNumber + 1, pageScale);
+            int newWidth = (int)Math.Round(viewport.width + 1 + pageScale);
+            int newHeight = (int)Math.Round(viewport.height);
+
+            if(chromePage.Viewport.Width != newWidth && chromePage.Viewport.Height != newHeight)
+            {
+                await chromePage.SetViewportAsync(new ViewPortOptions()
+                {
+                    Width = (int)Math.Round(viewport.width),
+                    Height = (int)Math.Round(viewport.height)
+                });
+            }
+
+            bool rendered = await chromePage.EvaluateFunctionAsync<bool>("renderPage", new[] { (pageNumber + 1).ToString(), pageScale.ToString() });
+            //if (!renderEvent.WaitOne(5000))
+            //{
+            //    Console.WriteLine("RenderPage renderEvent timed out.");
+            //}
             return await GetPage(pageScale);
         }
 
@@ -247,12 +277,28 @@ namespace BarnardTech.PDF2IMG
                 _pdfLoadWaiting = true;
                 var buffer = File.ReadAllBytes(filename);
                 var asBase64 = Convert.ToBase64String(buffer);
-                await chromePage.EvaluateFunctionAsync("openPdfAsBase64", new[] { asBase64 });
+                PageCount = await chromePage.EvaluateFunctionAsync<int>("openPdfAsBase64", new[] { asBase64 });
+                Console.WriteLine("PDF Loaded - " + PageCount);
+                pdfLoadEvent.Set();
+
+                if (OnPDFLoaded != null)
+                {
+                    new Task(() =>
+                    {
+                        OnPDFLoaded(this, new EventArgs());
+                    }).Start();
+                }
             }
             else
             {
                 throw new Exception("A PDF file is already waiting to be loaded.");
             }
+        }
+
+        public async Task<PageViewport> GetPageViewport(int pageNumber, float pageScale)
+        {
+            string viewportJSON = await chromePage.EvaluateFunctionAsync<string>("getPageViewport", new[] { pageNumber.ToString(), pageScale.ToString() });
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<PageViewport>(viewportJSON);
         }
 
         public async void GotoPage(int pageNumber, double pageScale = 1.0)
@@ -269,7 +315,8 @@ namespace BarnardTech.PDF2IMG
                 // our screenshot has a few extra pixels on the right to allow 'breathing space' for the PDF
                 // to display full-screen, so we need to remove that.
                 Bitmap screenShot = new Bitmap(mStream);
-                Bitmap outBmp = new Bitmap((int)(screenShot.Width - Math.Round(pageScale) - 1), screenShot.Height);
+                //Bitmap outBmp = new Bitmap((int)(screenShot.Width - Math.Round(pageScale) - 1), screenShot.Height);
+                Bitmap outBmp = new Bitmap(screenShot.Width, screenShot.Height);
                 Graphics g = Graphics.FromImage(outBmp);
                 g.DrawImage(screenShot, 0, 0);
                 g.Dispose();
