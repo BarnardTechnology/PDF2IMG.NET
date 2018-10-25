@@ -13,20 +13,19 @@ namespace BarnardTech.PDF2IMG
 {
     public delegate void PDFLoadedDelegate(object sender, EventArgs eventArgs);
 
+    /// <summary>
+    /// Renders pages from PDF files and provides additional information about the contents of the pages.
+    /// </summary>
     public class PageRenderer : IDisposable
     {
         public event PDFLoadedDelegate OnPDFLoaded;
 
         Browser chromeBrowser;
         Page chromePage;
-        public bool IsReady { get; private set; } = false;
+
         private bool readyFired = false;
         private Action _onReady;
         AutoResetEvent pdfLoadEvent = new AutoResetEvent(false);
-        AutoResetEvent paintEvent = new AutoResetEvent(false);
-        ManualResetEvent renderEvent = new ManualResetEvent(false);
-        ManualResetEvent pageRenderedEvent = new ManualResetEvent(false);
-        ManualResetEvent textReady = new ManualResetEvent(false);
 
         private bool _pdfLoadWaiting = false;
         public int PageCount = 0;
@@ -35,6 +34,12 @@ namespace BarnardTech.PDF2IMG
 
         FileResourceHandlerFactory fileResourceHandlerFactory;
 
+        /// <summary>
+        /// Create a new PageRenderer. This function uses PuppeteerSharp to control an in-background copy of Chrome.
+        /// If Chrome isn't available in the current application's path, it'll automatically download one. This means
+        /// that when creating a PageRenderer for the first time, thre may be a significant wait while Chrome is
+        /// downloaded.
+        /// </summary>
         public PageRenderer()
         {
             AutoResetEvent readyEvent = new AutoResetEvent(false);
@@ -105,6 +110,14 @@ namespace BarnardTech.PDF2IMG
             e.Request.RespondAsync(response);
         }
 
+        /// <summary>
+        /// Creates a PageRenderer asynchronously, and fires the 'onReady' parameter when the PageRenderer is ready to render pages.
+        /// Due to the fact the PageRenderer uses PuppeteerSharp in the background, it's possible that there may be a significant
+        /// delay when using this method for the first time. Chrome has to be available in the current application's path, and if it
+        /// is not, it will be downloaded. Subsequent calls of 'CreateAsync' will be much faster.
+        /// </summary>
+        /// <param name="onReady">A callback action which fires when the PageRenderer is ready.</param>
+        /// <returns>The PageRenderer object.</returns>
         public async static Task<PageRenderer> CreateAsync(Action onReady)
         {
             await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
@@ -156,7 +169,11 @@ namespace BarnardTech.PDF2IMG
             return null;
         }
 
-
+        /// <summary>
+        /// Gets the text found on a page. This method only returns the text as a string, and doesn't retain any formatting information about the text.
+        /// </summary>
+        /// <param name="pageNumber">The page number to retrieve the text for.</param>
+        /// <returns>Any text visible on the page as a string.</returns>
         public string GetText(int pageNumber)
         {
             Task<string> task = GetTextAsync(pageNumber);
@@ -164,6 +181,11 @@ namespace BarnardTech.PDF2IMG
             return task.Result;
         }
 
+        /// <summary>
+        /// Gets the text found on a page. This method only returns the text as a string, and doesn't retain any formatting information about the text.
+        /// </summary>
+        /// <param name="pageNumber">The page number to retrieve the text for.</param>
+        /// <returns>Any text visible on the page as a string.</returns>
         public async Task<string> GetTextAsync(int pageNumber)
         {
             if (pageNumber > -1 && pageNumber < PageCount)
@@ -173,8 +195,6 @@ namespace BarnardTech.PDF2IMG
             }
             return null;
         }
-
-        Dictionary<string, Action<List<TextContentItem>>> textContentCallbacks = new Dictionary<string, Action<List<TextContentItem>>>();
 
         public Bitmap RenderPage(int pageNumber, double pageScale)
         {
@@ -207,7 +227,6 @@ namespace BarnardTech.PDF2IMG
         public async Task<Bitmap> RenderPageAsync(int pageNumber, double pageScale)
         {
             PageViewport viewport = await GetPageViewport(pageNumber + 1, (float)pageScale);
-            renderEvent.Reset();
             int newWidth = (int)Math.Round(viewport.width);
             int newHeight = (int)Math.Round(viewport.height);
 
