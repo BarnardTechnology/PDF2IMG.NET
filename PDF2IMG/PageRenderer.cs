@@ -37,7 +37,7 @@ namespace BarnardTech.PDF2IMG
         /// <summary>
         /// Create a new PageRenderer. This function uses PuppeteerSharp to control an in-background copy of Chrome.
         /// If Chrome isn't available in the current application's path, it'll automatically download one. This means
-        /// that when creating a PageRenderer for the first time, thre may be a significant wait while Chrome is
+        /// that when creating a PageRenderer for the first time, there may be a significant wait while Chrome is
         /// downloaded.
         /// </summary>
         public PageRenderer()
@@ -172,7 +172,7 @@ namespace BarnardTech.PDF2IMG
         /// <summary>
         /// Gets the text found on a page. This method only returns the text as a string, and doesn't retain any formatting information about the text.
         /// </summary>
-        /// <param name="pageNumber">The page number to retrieve the text for.</param>
+        /// <param name="pageNumber">The zero-based page number to retrieve the text for.</param>
         /// <returns>Any text visible on the page as a string.</returns>
         public string GetText(int pageNumber)
         {
@@ -184,7 +184,7 @@ namespace BarnardTech.PDF2IMG
         /// <summary>
         /// Gets the text found on a page. This method only returns the text as a string, and doesn't retain any formatting information about the text.
         /// </summary>
-        /// <param name="pageNumber">The page number to retrieve the text for.</param>
+        /// <param name="pageNumber">The zero-based page number to retrieve the text for.</param>
         /// <returns>Any text visible on the page as a string.</returns>
         public async Task<string> GetTextAsync(int pageNumber)
         {
@@ -209,7 +209,12 @@ namespace BarnardTech.PDF2IMG
             return new Size((int)Math.Round(viewport.width), (int)Math.Round(viewport.height));
         }
 
-
+        /// <summary>
+        /// Renders a page to a System.Drawing.Bitmap object.
+        /// </summary>
+        /// <param name="pageNumber">The zero-based page number.</param>
+        /// <param name="pageScale">The page scale to use - a larger scale equates to a bigger final image. If you unsure of what scale to use, start at 1.0.</param>
+        /// <returns>The Bitmap object containing the rendered page.</returns>
         public Bitmap RenderPage(int pageNumber, double pageScale)
         {
             Task<Bitmap> t = RenderPageAsync(pageNumber, pageScale);
@@ -217,6 +222,16 @@ namespace BarnardTech.PDF2IMG
             return t.Result;
         }
 
+        /// <summary>
+        /// Renders a page to a System.Drawing.Bitmap object, and sets a maximum width and height for the resultant image.
+        /// Note that using the maximum width and height will not force the page to use those sizes. First, aspect-ratio is
+        /// always maintained, so this method is designed to ensure the rendered page will fit inside the box defined by
+        /// maxWidth and maxHeight. Secondly, this method will not scale the document up to fill the requested space.
+        /// </summary>
+        /// <param name="pageNumber">The zero-based page number.</param>
+        /// <param name="maxWidth">The maximum width in pixels that the rendered page is allowed to be.</param>
+        /// <param name="maxHeight">The maximum height in pixels that the rendered page is allowed to be.</param>
+        /// <returns>The Bitmap object containing the rendered page.</returns>
         public Bitmap RenderPage(int pageNumber, int maxWidth, int maxHeight)
         {
             Task<Bitmap> t = RenderPageAsync(pageNumber, maxWidth, maxHeight);
@@ -224,6 +239,16 @@ namespace BarnardTech.PDF2IMG
             return t.Result;
         }
 
+        /// <summary>
+        /// Renders a page to a System.Drawing.Bitmap object, and sets a maximum width and height for the resultant image.
+        /// Note that using the maximum width and height will not force the page to use those sizes. First, aspect-ratio is
+        /// always maintained, so this method is designed to ensure the rendered page will fit inside the box defined by
+        /// maxWidth and maxHeight. Secondly, this method will not scale the document up to fill the requested space.
+        /// </summary>
+        /// <param name="pageNumber">The zero-based page number.</param>
+        /// <param name="maxWidth">The maximum width in pixels that the rendered page is allowed to be.</param>
+        /// <param name="maxHeight">The maximum height in pixels that the rendered page is allowed to be.</param>
+        /// <returns>The Bitmap object containing the rendered page.</returns>
         public async Task<Bitmap> RenderPageAsync(int pageNumber, int maxWidth, int maxHeight)
         {
             // This function is slightly annoying in that it's going to end up calling GetPageViewport twice,
@@ -238,6 +263,12 @@ namespace BarnardTech.PDF2IMG
             return await RenderPageAsync(pageNumber, pageScale);
         }
 
+        /// <summary>
+        /// Renders a page to a System.Drawing.Bitmap object.
+        /// </summary>
+        /// <param name="pageNumber">The zero-based page number.</param>
+        /// <param name="pageScale">The page scale to use - a larger scale equates to a bigger final image. If you unsure of what scale to use, start at 1.0.</param>
+        /// <returns>The Bitmap object containing the rendered page.</returns>
         public async Task<Bitmap> RenderPageAsync(int pageNumber, double pageScale)
         {
             PageViewport viewport = await GetPageViewport(pageNumber + 1, (float)pageScale);
@@ -261,6 +292,10 @@ namespace BarnardTech.PDF2IMG
             return await GetPage(pageScale);
         }
 
+        /// <summary>
+        /// Loads a PDF from disk given the requested filename.
+        /// </summary>
+        /// <param name="filename">The filename of the PDF.</param>
         public void LoadPDF(string filename)
         {
             pdfLoadEvent.Reset();
@@ -268,6 +303,10 @@ namespace BarnardTech.PDF2IMG
             pdfLoadEvent.WaitOne();
         }
 
+        /// <summary>
+        /// Loads a PDF from a byte array.
+        /// </summary>
+        /// <param name="buffer">The byte array containing the PDF data.</param>
         public void LoadPDF(byte[] buffer)
         {
             pdfLoadEvent.Reset();
@@ -275,6 +314,10 @@ namespace BarnardTech.PDF2IMG
             pdfLoadEvent.WaitOne();
         }
 
+        /// <summary>
+        /// Loads a PDF from a stream. Reading begins from wherever the stream's position is currently set - it will not be reset to 0.
+        /// </summary>
+        /// <param name="stream">The stream containing the PDF data.</param>
         public void LoadPDF(Stream stream)
         {
             pdfLoadEvent.Reset();
@@ -282,6 +325,10 @@ namespace BarnardTech.PDF2IMG
             pdfLoadEvent.WaitOne();
         }
 
+        /// <summary>
+        /// Loads a PDF from disk given the requested filename.
+        /// </summary>
+        /// <param name="filename">The filename of the PDF.</param>
         public async void LoadPDFAsync(string filename)
         {
             FileStream fStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
@@ -295,6 +342,10 @@ namespace BarnardTech.PDF2IMG
             LoadPDFAsync(buffer);
         }
 
+        /// <summary>
+        /// Loads a PDF from a stream. Reading begins from wherever the stream's position is currently set - it will not be reset to 0.
+        /// </summary>
+        /// <param name="stream">The stream containing the PDF data.</param>
         public async void LoadPDFAsync(Stream stream)
         {
             byte[] buffer = new byte[stream.Length - stream.Position];
@@ -308,6 +359,10 @@ namespace BarnardTech.PDF2IMG
             LoadPDFAsync(buffer);
         }
 
+        /// <summary>
+        /// Loads a PDF from a byte array.
+        /// </summary>
+        /// <param name="buffer">The byte array containing the PDF data.</param>
         public async void LoadPDFAsync(byte[] buffer)
         {
             if (!_pdfLoadWaiting)
@@ -339,12 +394,7 @@ namespace BarnardTech.PDF2IMG
             return Newtonsoft.Json.JsonConvert.DeserializeObject<PageViewport>(viewportJSON);
         }
 
-        public async void GotoPage(int pageNumber, double pageScale = 1.0)
-        {
-            await chromePage.EvaluateFunctionAsync("setCurrentPage", new[] { pageNumber.ToString(), pageScale.ToString() });
-        }
-
-        public async Task<Bitmap> GetPage(double pageScale)
+        private async Task<Bitmap> GetPage(double pageScale)
         {
             if (chromePage != null)
             {
