@@ -235,12 +235,51 @@ namespace BarnardTech.PDF2IMG
             pdfLoadEvent.WaitOne();
         }
 
+        public void LoadPDF(byte[] buffer)
+        {
+            pdfLoadEvent.Reset();
+            LoadPDFAsync(buffer);
+            pdfLoadEvent.WaitOne();
+        }
+
+        public void LoadPDF(Stream stream)
+        {
+            pdfLoadEvent.Reset();
+            LoadPDFAsync(stream);
+            pdfLoadEvent.WaitOne();
+        }
+
         public async void LoadPDFAsync(string filename)
+        {
+            FileStream fStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
+            byte[] buffer = new byte[fStream.Length];
+            byte[] chunk = new byte[4096];
+            while (fStream.Position < fStream.Length) {
+                long offset = fStream.Position;
+                int bytes = await fStream.ReadAsync(chunk, 0, chunk.Length);
+                Array.Copy(chunk, 0, buffer, offset, bytes);
+            }
+            LoadPDFAsync(buffer);
+        }
+
+        public async void LoadPDFAsync(Stream stream)
+        {
+            byte[] buffer = new byte[stream.Length - stream.Position];
+            byte[] chunk = new byte[4096];
+            while (stream.Position < stream.Length)
+            {
+                long offset = stream.Position;
+                int bytes = await stream.ReadAsync(chunk, 0, chunk.Length);
+                Array.Copy(chunk, 0, buffer, offset, bytes);
+            }
+            LoadPDFAsync(buffer);
+        }
+
+        public async void LoadPDFAsync(byte[] buffer)
         {
             if (!_pdfLoadWaiting)
             {
                 _pdfLoadWaiting = true;
-                var buffer = File.ReadAllBytes(filename);
                 var asBase64 = Convert.ToBase64String(buffer);
                 PageCount = await chromePage.EvaluateFunctionAsync<int>("openPdfAsBase64", new[] { asBase64 });
                 Console.WriteLine("PDF Loaded.");
