@@ -196,6 +196,20 @@ namespace BarnardTech.PDF2IMG
             return null;
         }
 
+        public Size GetPageSize(int pageNumber, float scale)
+        {
+            Task<Size> t = GetPageSizeAsync(pageNumber, scale);
+            t.Wait();
+            return t.Result;
+        }
+
+        public async Task<Size> GetPageSizeAsync(int pageNumber, float scale)
+        {
+            PageViewport viewport = await GetPageViewport(pageNumber + 1, scale);
+            return new Size((int)Math.Round(viewport.width), (int)Math.Round(viewport.height));
+        }
+
+
         public Bitmap RenderPage(int pageNumber, double pageScale)
         {
             Task<Bitmap> t = RenderPageAsync(pageNumber, pageScale);
