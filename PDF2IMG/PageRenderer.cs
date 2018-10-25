@@ -74,53 +74,12 @@ namespace BarnardTech.PDF2IMG
             page.Request += Page_Request;
             page.RequestFinished += Page_RequestFinished;
             page.Load += Page_Load;
-
-            //chromePage.ExposeFunctionAsync<int, int>("pdfLoaded", (numPages) =>
-            //{
-            //    Console.WriteLine("pdfLoaded");
-            //    renderEvent.Reset();
-            //    PageCount = numPages;
-            //    if (OnPDFLoaded != null)
-            //    {
-            //        new Task(() =>
-            //        {
-            //            OnPDFLoaded(this, new EventArgs());
-            //        }).Start();
-            //    }
-            //    pdfLoadEvent.Set();
-            //    return 0;
-            //});
-
-            //chromePage.ExposeFunctionAsync<int, int>("pdfRendered", (pageNumber) =>
-            //{
-            //    Console.WriteLine("pdfRendered");
-            //    CurrentPageNumber = pageNumber;
-            //    paintEvent.Reset();
-            //    renderEvent.Set();
-            //    return 0;
-            //});
-
-            //chromePage.ExposeFunctionAsync<string, int, double, int>("pageOpened", (string viewportJSON, int pageNumber, double pageScale) =>
-            //{
-            //    PageViewport viewport = Newtonsoft.Json.JsonConvert.DeserializeObject<PageViewport>(viewportJSON);
-            //    Console.WriteLine("PageOpened " + pageNumber + ": " + viewport.width + ", " + viewport.height);
-            //    CurrentPageNumber = pageNumber;
-            //    chromePage.SetViewportAsync(new ViewPortOptions()
-            //    {
-            //        Width = (int)Math.Floor(viewport.width + Math.Round(pageScale)),
-            //        Height = (int)Math.Floor(viewport.height)
-            //    });
-            //    _pdfLoadWaiting = false;
-            //    renderEvent.Set();
-            //    return 0;
-            //});
-
             page.GoToAsync("http://host/web/pdfcapture2.html");
         }
 
         private void Page_Load(object sender, EventArgs e)
         {
-            Console.WriteLine("Page load");
+            Console.WriteLine("PDF.JS Loaded.");
             if (!readyFired)
             {
                 readyFired = true;
@@ -219,34 +178,40 @@ namespace BarnardTech.PDF2IMG
 
         public Bitmap RenderPage(int pageNumber, double pageScale)
         {
-            //Task<PageViewport> t = GetPageViewport(pageNumber + 1, (float)pageScale);
-            //t.Wait();
-            //PageViewport viewport = t.Result;
-            //Console.WriteLine("VIEWPORT: " + viewport.width + "x" + viewport.height);
-            //chromePage.EvaluateFunctionAsync("gotoPage", new[] { pageNumber.ToString() });
-            //renderEvent.Reset();
-            //chromePage.SetViewportAsync(new ViewPortOptions()
-            //{
-            //    Width = (int)Math.Round(viewport.width + 1 + pageScale),
-            //    Height = (int)Math.Round(viewport.height)
-            //});
-            //renderEvent.WaitOne();
-            //Task<Bitmap> tBmp = GetPage(pageScale);
-            //tBmp.Wait();
-            //return tBmp.Result;
             Task<Bitmap> t = RenderPageAsync(pageNumber, pageScale);
             t.Wait();
             return t.Result;
+        }
+
+        public Bitmap RenderPage(int pageNumber, int maxWidth, int maxHeight)
+        {
+            Task<Bitmap> t = RenderPageAsync(pageNumber, maxWidth, maxHeight);
+            t.Wait();
+            return t.Result;
+        }
+
+        public async Task<Bitmap> RenderPageAsync(int pageNumber, int maxWidth, int maxHeight)
+        {
+            // This function is slightly annoying in that it's going to end up calling GetPageViewport twice,
+            // when one call would really suffice. Should really restructure to remove the unnecessary call.
+            double pageScale = 1.0;
+            PageViewport viewport = await GetPageViewport(pageNumber + 1, 1.0f);
+            if(viewport.width > maxWidth || viewport.height > maxHeight)
+            {
+                // the viewport width or height is bigger than the maximum we want to allow, so we need to alter the page scale
+                pageScale = Math.Min(maxWidth / viewport.width, maxHeight / viewport.height);
+            }
+            return await RenderPageAsync(pageNumber, pageScale);
         }
 
         public async Task<Bitmap> RenderPageAsync(int pageNumber, double pageScale)
         {
             PageViewport viewport = await GetPageViewport(pageNumber + 1, (float)pageScale);
             renderEvent.Reset();
-            int newWidth = (int)Math.Round(viewport.width + 1 + pageScale);
+            int newWidth = (int)Math.Round(viewport.width);
             int newHeight = (int)Math.Round(viewport.height);
 
-            if(chromePage.Viewport.Width != newWidth && chromePage.Viewport.Height != newHeight)
+            if(chromePage.Viewport.Width != newWidth || chromePage.Viewport.Height != newHeight)
             {
                 await chromePage.SetViewportAsync(new ViewPortOptions()
                 {
@@ -278,7 +243,7 @@ namespace BarnardTech.PDF2IMG
                 var buffer = File.ReadAllBytes(filename);
                 var asBase64 = Convert.ToBase64String(buffer);
                 PageCount = await chromePage.EvaluateFunctionAsync<int>("openPdfAsBase64", new[] { asBase64 });
-                Console.WriteLine("PDF Loaded - " + PageCount);
+                Console.WriteLine("PDF Loaded.");
                 _pdfLoadWaiting = false;
                 pdfLoadEvent.Set();
 

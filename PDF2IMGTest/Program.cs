@@ -19,14 +19,14 @@ namespace PDF2IMGTest
             pRender = new PageRenderer();
             //pRender.OnPDFLoaded += PRender_OnPDFLoaded;
             Console.WriteLine("Loading PDF");
-            pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
+            //pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
+            pRender.LoadPDF(@"C:\Users\chris.barnard\Desktop\Drawings\11598-101H.pdf");
             Console.WriteLine("Getting page images...");
             for (int i = 0; i < pRender.PageCount; i++)
             {
-                pRender.RenderPage(i, 1).Save("capture_" + (i + 1) + ".png");
+                pRender.RenderPage(i, 1280, 1280).Save("capture_" + (i + 1) + ".png");
             }
             Console.WriteLine("Done.");
-            Console.ReadLine();
         }
 
         private async static void PRender_OnPDFLoaded(object sender, EventArgs eventArgs)
