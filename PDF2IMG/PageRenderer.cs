@@ -205,7 +205,7 @@ namespace BarnardTech.PDF2IMG
 
         public async Task<Size> GetPageSizeAsync(int pageNumber, float scale)
         {
-            PageViewport viewport = await GetPageViewport(pageNumber + 1, scale);
+            PageViewport viewport = await GetPageViewport(pageNumber, scale);
             return new Size((int)Math.Round(viewport.width), (int)Math.Round(viewport.height));
         }
 
@@ -254,7 +254,7 @@ namespace BarnardTech.PDF2IMG
             // This function is slightly annoying in that it's going to end up calling GetPageViewport twice,
             // when one call would really suffice. Should really restructure to remove the unnecessary call.
             double pageScale = 1.0;
-            PageViewport viewport = await GetPageViewport(pageNumber + 1, 1.0f);
+            PageViewport viewport = await GetPageViewport(pageNumber, 1.0f);
             if(viewport.width > maxWidth || viewport.height > maxHeight)
             {
                 // the viewport width or height is bigger than the maximum we want to allow, so we need to alter the page scale
@@ -271,7 +271,7 @@ namespace BarnardTech.PDF2IMG
         /// <returns>The Bitmap object containing the rendered page.</returns>
         public async Task<Bitmap> RenderPageAsync(int pageNumber, double pageScale)
         {
-            PageViewport viewport = await GetPageViewport(pageNumber + 1, (float)pageScale);
+            PageViewport viewport = await GetPageViewport(pageNumber, (float)pageScale);
             int newWidth = (int)Math.Round(viewport.width);
             int newHeight = (int)Math.Round(viewport.height);
 
@@ -390,7 +390,7 @@ namespace BarnardTech.PDF2IMG
 
         public async Task<PageViewport> GetPageViewport(int pageNumber, float pageScale)
         {
-            string viewportJSON = await chromePage.EvaluateFunctionAsync<string>("getPageViewport", new[] { pageNumber.ToString(), pageScale.ToString() });
+            string viewportJSON = await chromePage.EvaluateFunctionAsync<string>("getPageViewport", new[] { (pageNumber + 1).ToString(), pageScale.ToString() });
             return Newtonsoft.Json.JsonConvert.DeserializeObject<PageViewport>(viewportJSON);
         }
 
