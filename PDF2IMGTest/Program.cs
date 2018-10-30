@@ -20,17 +20,20 @@ namespace PDF2IMGTest
             pRender = new PageRenderer();
             //pRender.OnPDFLoaded += PRender_OnPDFLoaded;
             Console.WriteLine("Loading PDF");
-            //pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
-            pRender.LoadPDF(@"C:\Users\chris.barnard\Desktop\Test documents\160427 Bristol Royal Infirmary Pre Construction Pack.pdf");
+            pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
             Console.WriteLine("Getting page images...");
             for (int i = 0; i < pRender.PageCount; i++)
             {
-                //pRender.RenderPage(i, 1280, 1280).Save("capture_" + (i + 1) + ".png");
-                GetPageWithAnnotations(i).Save("capture_" + (i + 1) + ".png");
+                pRender.RenderPage(i, 1280, 1280).Save("capture_" + (i + 1) + ".png");
             }
             Console.WriteLine("Done.");
         }
 
+        /// <summary>
+        /// Example method to draw annotations (eg, links) on a page. Any annotations are outlined in red.
+        /// </summary>
+        /// <param name="pageNumber">The page number we wish to draw.</param>
+        /// <returns>Returns a Bitmap object containing the rendered page with red rectangles signifying the position of each annotation.</returns>
         public static Bitmap GetPageWithAnnotations(int pageNumber)
         {
             Bitmap page = pRender.RenderPage(pageNumber, 1);
