@@ -101,6 +101,18 @@
                 );
             });
         };
+
+        window.getAnnotations = function (pageNumber) {
+            return new Promise((resolve, reject) => {
+                pageNumber = parseInt(pageNumber);
+                pdfDocument.getPage(pageNumber).then(
+                    (page) => {
+                        page.getAnnotations().then((annots) => {
+                            resolve(JSON.stringify(annots));
+                        });
+                    });
+            });
+        };
     </script>
 </body>
 </html>

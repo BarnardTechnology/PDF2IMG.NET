@@ -394,6 +394,12 @@ namespace BarnardTech.PDF2IMG
             return Newtonsoft.Json.JsonConvert.DeserializeObject<PageViewport>(viewportJSON);
         }
 
+        public async Task<List<Annotation>> GetAnnotations(int pageNumber)
+        {
+            string annotationJSON = await chromePage.EvaluateFunctionAsync<string>("getAnnotations", new[] { (pageNumber + 1).ToString() });
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<List<Annotation>>(annotationJSON);
+        }
+
         private async Task<Bitmap> GetPage(double pageScale)
         {
             if (chromePage != null)
