@@ -404,7 +404,26 @@ namespace BarnardTech.PDF2IMG
         public async Task<List<Annotation>> GetAnnotationsAsync(int pageNumber)
         {
             string annotationJSON = await chromePage.EvaluateFunctionAsync<string>("getAnnotations", new[] { (pageNumber + 1).ToString() });
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<List<Annotation>>(annotationJSON);
+            PageViewport viewport = await GetPageViewport(pageNumber, 1);
+            List<Annotation> annotations = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Annotation>>(annotationJSON);
+
+            foreach(Annotation a in annotations)
+            {
+                // reverse the Y-coordinate to convert from PDF coordinates
+                if(a.rect != null)
+                {
+                    if(a.rect.Count == 4)
+                    {
+                        a.rect[1] = viewport.height - a.rect[1];
+                        a.rect[3] = viewport.height - a.rect[3];
+                        float newY = a.rect[3];
+                        a.rect[3] = a.rect[1];
+                        a.rect[1] = newY;
+                    }
+                }
+            }
+
+            return annotations;
         }
 
         private async Task<Bitmap> GetPage(double pageScale)
