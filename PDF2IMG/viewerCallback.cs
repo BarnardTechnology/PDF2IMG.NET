@@ -34,31 +34,51 @@ namespace BarnardTech.PDF2IMG
         public bool vertical;
     }
 
+    public class AnnotationColor
+    {
+        [JsonProperty("0")]
+        public byte R;
+        [JsonProperty("1")]
+        public byte G;
+        [JsonProperty("2")]
+        public byte B;
+    }
+
     public class Annotation
     {
+        [JsonProperty()]
         internal AnnotationFlag annotationFlags;
+        [JsonProperty()]
         internal AnnotationType annotationType;
+        [JsonProperty()]
         internal AnnotationBorderStyle borderStyle;
-        internal byte[] color;
+        [JsonProperty()]
+        internal AnnotationColor color;
+        [JsonProperty()]
         internal bool hasAppearance;
+        [JsonProperty()]
         internal string id;
-        internal float[] rect;
+        [JsonProperty()]
+        internal List<float> rect;
+        [JsonProperty()]
         internal string subtype;
+        [JsonProperty()]
         internal string unsafeUrl;
+        [JsonProperty()]
         internal string url;
 
         public RectangleF Rect
         {
             get
             {
-                if (rect.Length == 4)
+                if (rect != null)
                 {
-                    return new RectangleF(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
+                    if (rect.Count == 4)
+                    {
+                        return new RectangleF(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
+                    }
                 }
-                else
-                {
-                    return new RectangleF();
-                }
+                return new RectangleF();
             }
         }
 
@@ -98,6 +118,7 @@ namespace BarnardTech.PDF2IMG
         public double horizontalCornerRadius;
         public double verticalCornerRadius;
         public double width;
+        [JsonProperty()]
         internal AnnotationBorderStyleType style;
     }
 
