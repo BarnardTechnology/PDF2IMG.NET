@@ -9,6 +9,13 @@ I've made some very minor improvements for my own usage, and wanted to put these
 
 # UPDATES
 
+## v1.5.9
+
+The rendering seems to be working very well now - it's stable and relatively fast. Large page scales are supported.
+I completely reworked the primary webpage that Chrome uses to render the pages - rather than use PDF.JS' built-in
+viewer, I built my own really quick canvas renderer which has solved a lot of the timing issues I was having getting
+the rendered pages.
+
 ## v1.5.3
 
 This is starting to work in a better way now, with a nicer structure and more reliable results. Still a lot of work to
@@ -41,12 +48,12 @@ for (int i = 0; i < pRender.PageCount; i++)
 }
 ```
 
-# Limitations
+# Future work
 
-Major problems I'm having at the moment are primarily around the page rendering when larger scales are used. In general,
-I'm finding that page scales of 2 and above are slowing down the rendering to a point where sometimes the browser hasn't
-finished the render before the capture is taken, leading to half-rendered pages being saved to disk.
+I started out just trying to build something that would render PDF pages to images and would be totally open source.
+Now I've started building additional classes using more open source projects to actually create and manipulate PDFs.
+I don't currently know if I'll keep this under the same project - technically, PDF2IMG does what it says on the tin
+now, so I may want to fork this into a new project.
 
-A simple solution would be to set an arbitrary wait time before the render happens, and increase this wait time as the
-page size increases - but this would be haphazard to say the least. Ideally, I'll find some sort of event I can hook
-into on the browser side that signals the render has complete.
+Currently though, it's possible with the PDFDocument class to actually load PDF files in, add images, and then save
+them back out again. I'll definitely be adding more functionality to this over time.

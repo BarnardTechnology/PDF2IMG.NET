@@ -1,0 +1,115 @@
+﻿<html>
+    <head>
+        <script type="text/javascript" src="pdf-lib.js"></script>
+    </head>
+    <body>
+        <script>
+            var pdfDoc = null;
+            var pdfPages = null;
+
+            window.loadPDF = function (base64) {
+                return new Promise((resolve, reject) => {
+                    var binary_string = window.atob(base64);
+                    var len = binary_string.length;
+                    var bytes = new Uint8Array(len);
+                    for (var i = 0; i < len; i++) {
+                        bytes[i] = binary_string.charCodeAt(i);
+                    }
+
+                    pdfDoc = PDFLib.PDFDocumentFactory.load(bytes);
+                    pdfPages = pdfDoc.getPages();
+                    console.log('loaded.');
+                    console.log(pdfPages);
+                    resolve(pdfPages.length);
+                });
+            };
+
+            window.getMediaBox = function (pageNumber) {
+                return new Promise((resolve, reject) => {
+                    if (pdfPages != null) {
+                        if (pageNumber > -1 && pageNumber < pdfPages.length) {
+                            var mediaBox = pdfPages[pageNumber].get("MediaBox");
+                            var rect = {
+                                X: mediaBox.array[0].number,
+                                Y: mediaBox.array[1].number,
+                                Width: mediaBox.array[2].number,
+                                Height: mediaBox.array[3].number
+                            };
+                            resolve(JSON.stringify(rect));
+                        }
+                        else
+                        {
+                            reject();
+                        }
+                    }
+                    else
+                    {
+                        reject();
+                    }
+                });
+            };
+
+            window.insertPNG = function (base64, pngName, pageNumber, x, y, width, height) {
+                return new Promise((resolve, reject) => {
+                    x = parseFloat(x);
+                    y = parseFloat(y);
+                    width = parseFloat(width);
+                    height = parseFloat(height);
+                    pageNumber = parseInt(pageNumber);
+
+                    if (pdfDoc !== null) {
+                        var binary_string = window.atob(base64);
+                        var len = binary_string.length;
+                        var pngBytes = new Uint8Array(len);
+                        for (var i = 0; i < len; i++) {
+                            pngBytes[i] = binary_string.charCodeAt(i);
+                        }
+
+                        const [pngImage, pngDims] = pdfDoc.embedPNG(pngBytes);
+                        const contentStream = pdfDoc.register(
+                            pdfDoc.createContentStream(
+                                PDFLib.drawImage(pngName, {
+                                    x: x,
+                                    y: y,
+                                    width: width,
+                                    height: height,
+                                    rotateDegrees: 0,
+                                    skewDegrees: { xAxis: 0, yAxis: 0 }
+                                })
+                            )
+                        );
+                        var page = pdfPages[pageNumber];
+                        page.addImageObject(pngName, pngImage).addContentStreams(contentStream);
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                        reject();
+                    }
+                });
+            };
+
+            window.savePDF = function () {
+                return new Promise((resolve, reject) => {
+                    if (pdfDoc !== null) {
+                        var pdfBytes = PDFLib.PDFDocumentWriter.saveToBytes(pdfDoc);
+                        console.log('pdf: ' + pdfBytes.length);
+                        //var decoder = new TextDecoder('utf-8');
+                        //var byte_string = String.fromCharCode.apply(null, pdfBytes);
+                        //console.log('byte_string: ' + byte_string.length);
+                        //var b = btoa(byte_string);
+                        //var b = btoa(decoder.decode(pdfBytes));
+                        var b = btoa(pdfBytes.reduce((data, byte) => {
+                            return data + String.fromCharCode(byte);
+                        }, ''));
+                        console.log(b.length);
+                        resolve(b);
+                        //resolve(pdfBytes);
+                    } else {
+                        reject();
+                    }
+                });
+            }
+
+        </script>
+    </body>
+</html>

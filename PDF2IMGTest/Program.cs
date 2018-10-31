@@ -27,6 +27,24 @@ namespace PDF2IMGTest
                 pRender.RenderPage(i, 1280, 1280).Save("capture_" + (i + 1) + ".png");
             }
             Console.WriteLine("Done.");
+            Console.ReadLine();
+        }
+
+        /// <summary>
+        /// A really basic example to show the new, in-development functionality that will allow PDFs to be edited.
+        /// </summary>
+        /// <param name="bitmapFilename"></param>
+        public static void AddImageToPDF(string bitmapFilename)
+        {
+            Bitmap bmp = new Bitmap(bitmapFilename);
+            PDFDocument pDoc = new PDFDocument();
+            Console.WriteLine("Loading for editing...");
+            pDoc.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
+            Console.WriteLine("Inserting image...");
+            pDoc.InsertImage("testimage", bmp, 0, 10, 10, 100, 100);
+            Console.WriteLine("Saving...");
+            pDoc.SavePDFAsync();
+            Console.WriteLine("Done...");
         }
 
         /// <summary>

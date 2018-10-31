@@ -7,9 +7,9 @@
     <PackageProjectUrl>https://github.com/BarnardTechnology/PDF2IMG.NET</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/BarnardTechnology/PDF2IMG.NET/blob/master/LICENSE</PackageLicenseUrl>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>1.5.9</Version>
+    <Version>1.6.0</Version>
     <Authors>PDF2IMG</Authors>
-    <Description>Provides PDF to Bitmap functionality using PDF.JS and PuppeteerSharp in the background. Very much a work-in-progress.</Description>
+    <Description>Provides PDF to Bitmap functionality using PDF.JS and PuppeteerSharp in the background. The aim is to be open source, create high quality and accurate images, work relatively quickly and (hopefully) be fully cross-platform.</Description>
     <RootNamespace>BarnardTech.PDF2IMG</RootNamespace>
   </PropertyGroup>
 
@@ -303,14 +303,20 @@
     <None Remove="Resources\web\locale\en-US\viewer.properties" />
     <None Remove="Resources\web\locale\en-ZA\viewer.properties" />
     <None Remove="Resources\web\locale\locale.properties" />
+    <None Remove="Resources\web\pdf-lib.js" />
     <None Remove="Resources\web\pdfcapture.css" />
     <None Remove="Resources\web\pdfcapture.html" />
     <None Remove="Resources\web\pdfcapture.js" />
     <None Remove="Resources\web\pdfcapture2.html" />
+    <None Remove="Resources\web\pdfedit.html" />
     <None Remove="Resources\web\viewer.css" />
     <None Remove="Resources\web\viewer.html" />
     <None Remove="Resources\web\viewer.js" />
     <None Remove="Resources\web\viewer.js.map" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\web\pdf-lib.js" />
   </ItemGroup>
 
   <ItemGroup>
@@ -603,6 +609,7 @@
     <EmbeddedResource Include="Resources\web\pdfcapture.html" />
     <EmbeddedResource Include="Resources\web\pdfcapture.js" />
     <EmbeddedResource Include="Resources\web\pdfcapture2.html" />
+    <EmbeddedResource Include="Resources\web\pdfedit.html" />
     <EmbeddedResource Include="Resources\web\viewer.css" />
     <EmbeddedResource Include="Resources\web\viewer.html" />
     <EmbeddedResource Include="Resources\web\viewer.js" />
