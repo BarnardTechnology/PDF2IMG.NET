@@ -7,7 +7,7 @@
     <PackageProjectUrl>https://github.com/BarnardTechnology/PDF2IMG.NET</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/BarnardTechnology/PDF2IMG.NET/blob/master/LICENSE</PackageLicenseUrl>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>1.6.0</Version>
+    <Version>1.6.1</Version>
     <Authors>PDF2IMG</Authors>
     <Description>Provides PDF to Bitmap functionality using PDF.JS and PuppeteerSharp in the background. The aim is to be open source, create high quality and accurate images, work relatively quickly and (hopefully) be fully cross-platform.</Description>
     <RootNamespace>BarnardTech.PDF2IMG</RootNamespace>

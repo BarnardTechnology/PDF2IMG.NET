@@ -44,7 +44,7 @@ namespace BarnardTech.PDF2IMG
 
                 var browser = await Puppeteer.LaunchAsync(new LaunchOptions
                 {
-                    Headless = false
+                    Headless = true
                 });
 
                 var page = await browser.NewPageAsync();
@@ -193,6 +193,9 @@ namespace BarnardTech.PDF2IMG
                     RectangleF mediaBox = Newtonsoft.Json.JsonConvert.DeserializeObject<RectangleF>(rectJson);
                     PDFPage p = new PDFPage(i, mediaBox, chromePage);
                     pdfPages.Add(p);
+
+                    int rotation = await chromePage.EvaluateFunctionAsync<int>("getRotation", new[] { i });
+                    p.Rotate = rotation;
                 }
 
                 _pdfLoadWaiting = false;
@@ -243,12 +246,12 @@ namespace BarnardTech.PDF2IMG
             }
         }
 
-        public async void SavePDFAsync()
+        public async void SavePDFAsync(string filename)
         {
             string base64string = await chromePage.EvaluateFunctionAsync<string>("savePDF", new object[] { });
             byte[] pdfdata = Convert.FromBase64String(base64string);
 
-            using (FileStream fStream = File.OpenWrite("pdfoutput.pdf"))
+            using (FileStream fStream = File.OpenWrite(filename))
             {
                 using (BinaryWriter bStream = new BinaryWriter(fStream))
                 {

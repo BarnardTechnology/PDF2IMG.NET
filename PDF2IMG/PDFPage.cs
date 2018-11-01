@@ -9,6 +9,7 @@ namespace BarnardTech.PDF2IMG
     public class PDFPage
     {
         public int Index;
+        public int Rotate;
         public RectangleF MediaBox;
         private Page _chromePage;
 

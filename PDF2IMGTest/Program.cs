@@ -27,7 +27,6 @@ namespace PDF2IMGTest
                 pRender.RenderPage(i, 1280, 1280).Save("capture_" + (i + 1) + ".png");
             }
             Console.WriteLine("Done.");
-            Console.ReadLine();
         }
 
         /// <summary>
@@ -43,7 +42,7 @@ namespace PDF2IMGTest
             Console.WriteLine("Inserting image...");
             pDoc.InsertImage("testimage", bmp, 0, 10, 10, 100, 100);
             Console.WriteLine("Saving...");
-            pDoc.SavePDFAsync();
+            pDoc.SavePDFAsync("pdfoutput.pdf");
             Console.WriteLine("Done...");
         }
 
