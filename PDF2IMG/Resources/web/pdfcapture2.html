@@ -75,6 +75,7 @@
                         page.getTextContent().then(
                             (content) => {
                                 content.viewport = page.getViewport(1);
+                                console.log(content);
                                 resolve(JSON.stringify(content));
                             }
                         );

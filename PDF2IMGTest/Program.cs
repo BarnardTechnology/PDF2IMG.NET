@@ -38,7 +38,8 @@ namespace PDF2IMGTest
             Bitmap bmp = new Bitmap(bitmapFilename);
             PDFDocument pDoc = new PDFDocument();
             Console.WriteLine("Loading for editing...");
-            pDoc.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
+            //pDoc.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
+            pDoc.LoadPDF(@"C:\Users\chris.barnard\Desktop\Drawings\11598-101F.pdf");
             Console.WriteLine("Inserting image...");
             pDoc.InsertImage("testimage", bmp, 0, 10, 10, 100, 100);
             Console.WriteLine("Saving...");

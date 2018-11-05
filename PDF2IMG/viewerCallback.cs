@@ -19,17 +19,17 @@ namespace BarnardTech.PDF2IMG
     {
         public string dir;
         public string fontName;
-        public double height;
+        public double? height;
         public string str;
         public List<double> transform;
-        public double width;
+        public double? width;
         public List<TextContentChar> chars;
     }
 
     internal class InternalTextContentStyle
     {
-        public double ascent;
-        public double descent;
+        public double? ascent;
+        public double? descent;
         public string fontFamily;
         public bool vertical;
     }
@@ -115,9 +115,9 @@ namespace BarnardTech.PDF2IMG
     internal class AnnotationBorderStyle
     {
         public List<int> dashArray;
-        public double horizontalCornerRadius;
-        public double verticalCornerRadius;
-        public double width;
+        public double? horizontalCornerRadius;
+        public double? verticalCornerRadius;
+        public double? width;
         [JsonProperty()]
         internal AnnotationBorderStyleType style;
     }

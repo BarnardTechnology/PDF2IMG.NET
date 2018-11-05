@@ -50,7 +50,7 @@ namespace BarnardTech.PDF2IMG
 
                 var browser = await Puppeteer.LaunchAsync(new LaunchOptions
                 {
-                    Headless = true
+                    Headless = false
                 });
 
                 var page = await browser.NewPageAsync();
@@ -154,8 +154,8 @@ namespace BarnardTech.PDF2IMG
                     {
                         Text = item.str,
                         Direction = item.dir == "rtl" ? TextDirection.RightToLeft : TextDirection.LeftToRight,
-                        Width = item.width,
-                        Height = item.height,
+                        Width = item.width.HasValue ? item.width.Value : 0,
+                        Height = item.height.HasValue ? item.height.Value : 0,
                         X = item.transform[4],
                         Y = item.transform[5],
                         FontName = item.fontName,
