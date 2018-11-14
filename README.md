@@ -1,6 +1,6 @@
 # PDF2IMG.NET
 
-PDF to Image Converter Library for .Net, using PuppeteerSharp and PDF.JS
+PDF to Image Converter Library for .NET, using PuppeteerSharp and PDF.JS
 
 This library is based on the [PDF2PNG](https://github.com/chen0040/cs-pdf-to-image) library by [@chen0040](https://github.com/chen0040).
 
