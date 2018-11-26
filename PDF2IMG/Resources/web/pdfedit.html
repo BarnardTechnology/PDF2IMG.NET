@@ -70,7 +70,7 @@
                 });
             };
 
-            window.insertPNG = function (base64, pngName, pageNumber, x, y, width, height) {
+            window.insertPNG = function (base64, pngName, pageNumber, x, y, width, height, rotation) {
                 return new Promise((resolve, reject) => {
                     x = parseFloat(x);
                     y = parseFloat(y);
@@ -94,7 +94,7 @@
                                     y: y,
                                     width: width,
                                     height: height,
-                                    rotateDegrees: 0,
+                                    rotateDegrees: rotation,
                                     skewDegrees: { xAxis: 0, yAxis: 0 }
                                 })
                             )

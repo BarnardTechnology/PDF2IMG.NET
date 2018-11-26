@@ -36,7 +36,7 @@ namespace BarnardTech.PDF2IMG
 
         /// <summary>
         /// Create a new PageRenderer. This function uses PuppeteerSharp to control an in-background copy of Chrome.
-        /// If Chrome isn't available in the current application's path, it'll automatically download one. This means
+        /// If Chrome isn't available in the current application's path, it'll automatically download it. This means
         /// that when creating a PageRenderer for the first time, there may be a significant wait while Chrome is
         /// downloaded.
         /// </summary>

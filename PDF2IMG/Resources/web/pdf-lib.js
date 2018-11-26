@@ -1166,6 +1166,32 @@
 	    }
 	    return arr.subarray(idx);
 	};
+	var PERCENT_SIGN_CODE = charCode('%');
+	var NEWLINE_CODE = charCode('\n');
+	var CARRIAGE_RETURN_CODE = charCode('\r');
+	var isEOLMarker = function (code) {
+	    return code === NEWLINE_CODE || code === CARRIAGE_RETURN_CODE;
+	};
+	var trimArrayAndRemoveComments = function (arr) {
+	    var strippedComment = true;
+	    var newArray = arr;
+	    while (strippedComment) {
+	        newArray = trimArray(newArray);
+	        if (newArray[0] === PERCENT_SIGN_CODE) {
+	            var idx = 0;
+	            while (!isEOLMarker(newArray[idx]) && idx < newArray.length)
+	                idx += 1;
+	            var foundEOLMarker = isEOLMarker(newArray[idx]);
+	            if (foundEOLMarker)
+	                newArray = newArray.subarray(idx);
+	            strippedComment = foundEOLMarker;
+	        }
+	        else {
+	            strippedComment = false;
+	        }
+	    }
+	    return newArray;
+	};
 	var arraysAreEqual = function (arr1, arr1Start, arr1Stop, arr2, arr2Start, arr2Stop) {
 	    var arr1Length = arr1Stop - arr1Start;
 	    if (arr1Length !== arr2Stop - arr2Start)
@@ -2176,9 +2202,7 @@
 	                .replace('#', '#23')
 	                .split('')
 	                .map(function (char) {
-	                return PDFName.isRegularChar(char)
-	                    ? char
-	                    : "#" + charCode(char).toString(16);
+	                return PDFName.isRegularChar(char) ? char : "#" + charCode(char).toString(16);
 	            })
 	                .join('');
 	        };
@@ -13641,7 +13665,7 @@
 	        /** @hidden */
 	        this.splitAlphaChannel = function () {
 	            var pixels = _this.image.decodePixelsSync();
-	            var colorByteSize = _this.image.colors * _this.image.bits / 8;
+	            var colorByteSize = (_this.image.colors * _this.image.bits) / 8;
 	            var pixelCount = _this.image.width * _this.image.height;
 	            _this.imgData = new Uint8Array(pixelCount * colorByteSize);
 	            _this.alphaChannel = new Uint8Array(pixelCount);
@@ -14014,7 +14038,7 @@
 	 */
 	var parseBool = function (input, _a) {
 	    var onParseBool = (_a === void 0 ? {} : _a).onParseBool;
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    var boolRegex = /^(?:[\0\t\n\f\r ]*)(true|false)((?=[\0\t\n\f\r \]]))?/;
 	    // Search for first character that isn't part of a boolean
 	    var idx = 0;
@@ -14047,7 +14071,7 @@
 	var parseHexString = function (input, _a) {
 	    var onParseHexString = (_a === void 0 ? {} : _a).onParseHexString;
 	    var hexStringRegex = /^<([\dABCDEFabcdef\0\t\n\f\r ]*)>/;
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    if (trimmed.length === 0)
 	        return undefined;
 	    // Search for first character that isn't part of a hex string
@@ -14080,7 +14104,7 @@
 	 */
 	var parseIndirectRef = function (input, _a) {
 	    var onParseIndirectRef = (_a === void 0 ? {} : _a).onParseIndirectRef;
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    var indirectRefRegex = /^(\d+)[\0\t\n\f\r ]*(\d+)[\0\t\n\f\r ]*R/;
 	    // Check that initial characters make up an indirect reference
 	    var rIdx = arrayIndexOf(trimmed, 'R');
@@ -14107,7 +14131,7 @@
 	 */
 	var parseName = function (input, _a) {
 	    var onParseName = (_a === void 0 ? {} : _a).onParseName;
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    var nameRegex = /^\/([^\0\t\n\f\r \][<>(/]*)/;
 	    // Search for first character that isn't part of a name
 	    var idx = 1; // Skip the leading '/'
@@ -14139,7 +14163,7 @@
 	 */
 	var parseNull = function (input, _a) {
 	    var onParseNull = (_a === void 0 ? {} : _a).onParseNull;
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    if (arrayToString(trimmed, 0, 4) !== 'null')
 	        return undefined;
 	    if (onParseNull)
@@ -14160,7 +14184,7 @@
 	 */
 	var parseNumber = function (input, _a) {
 	    var onParseNumber = (_a === void 0 ? {} : _a).onParseNumber;
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    var numRegex = /^(([+-]?\d+(\.\d+)?)|([+-]?\.\d+))/;
 	    // Search for the first character that isn't part of a number
 	    var idx = 0;
@@ -14190,7 +14214,7 @@
 	 */
 	var parseString = function (input, _a) {
 	    var onParseString = (_a === void 0 ? {} : _a).onParseString;
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    if (arrayCharAt(trimmed, 0) !== '(')
 	        return undefined;
 	    var parensStack = [];
@@ -14256,13 +14280,13 @@
 	 */
 	var parseDict = function (input, index, parseHandlers) {
 	    if (parseHandlers === void 0) { parseHandlers = {}; }
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    if (arrayToString(trimmed, 0, 2) !== '<<')
 	        return undefined;
 	    var pdfDict = PDFDictionary$$1.from(new Map(), index);
 	    // Recursively parse each entry in the dictionary
-	    var remainder = trimArray(trimmed.subarray(2));
-	    while (arrayToString(trimArray(remainder), 0, 2) !== '>>') {
+	    var remainder = trimArrayAndRemoveComments(trimmed.subarray(2));
+	    while (arrayToString(trimArrayAndRemoveComments(remainder), 0, 2) !== '>>') {
 	        // Parse the key for this entry
 	        var _a = parseName(remainder) || error('Failed to parse dictionary key'), key = _a[0], r1 = _a[1];
 	        remainder = r1;
@@ -14280,10 +14304,10 @@
 	        pdfDict.set(key, pdfObject);
 	        remainder = r2;
 	    }
-	    var remainderTrim = trimArray(remainder);
+	    var remainderTrim = trimArrayAndRemoveComments(remainder);
 	    // Make sure the brackets are paired
 	    validate(arrayToString(remainderTrim, 0, 2), isIdentity('>>'), 'Mismatched brackets!');
-	    remainder = trimArray(remainderTrim.subarray(2)); // Remove ending '>>' pair
+	    remainder = trimArrayAndRemoveComments(remainderTrim.subarray(2)); // Remove ending '>>' pair
 	    var typedDict = typeDict(pdfDict);
 	    if (parseHandlers.onParseDict)
 	        parseHandlers.onParseDict(typedDict);
@@ -14308,13 +14332,13 @@
 	var parseArray = function (input, index, parseHandlers) {
 	    if (parseHandlers === void 0) { parseHandlers = {}; }
 	    // Make sure it is possible for this to be an array.
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    if (arrayCharAt(trimmed, 0) !== '[')
 	        return undefined;
 	    var pdfArray = PDFArray$$1.fromArray([], index);
 	    // Recursively parse each element of the array
 	    var remainder = trimmed.subarray(1); // Remove the '['
-	    while (arrayCharAt(trimArray(remainder), 0) !== ']') {
+	    while (arrayCharAt(trimArrayAndRemoveComments(remainder), 0) !== ']') {
 	        // Parse the value for this element
 	        var _a = parseName(remainder, parseHandlers) ||
 	            parseDict(remainder, index, parseHandlers) ||
@@ -14329,10 +14353,10 @@
 	        pdfArray.push(pdfObject);
 	        remainder = r;
 	    }
-	    var remainderTrim = trimArray(remainder);
+	    var remainderTrim = trimArrayAndRemoveComments(remainder);
 	    // Make sure the brackets are paired
 	    validate(arrayCharAt(remainderTrim, 0), isIdentity(']'), 'Mismatched brackets!');
-	    remainder = trimArray(remainderTrim.subarray(1)); // Remove the ']'
+	    remainder = trimArrayAndRemoveComments(remainderTrim.subarray(1)); // Remove the ']'
 	    if (parseHandlers.onParseArray)
 	        parseHandlers.onParseArray(pdfArray);
 	    return [pdfArray, remainder];
@@ -14446,7 +14470,7 @@
 	var parseStream = function (input, dict, parseHandlers) {
 	    if (parseHandlers === void 0) { parseHandlers = {}; }
 	    // Check that the next bytes comprise the beginning of a stream
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    var startstreamIdx;
 	    if (arrayToString(trimmed, 0, 7) === 'stream\n')
 	        startstreamIdx = 7;
@@ -14559,7 +14583,7 @@
 	 */
 	var parseIndirectObj = function (input, index, parseHandlers) {
 	    if (parseHandlers === void 0) { parseHandlers = {}; }
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    var indirectObjRegex = /^(\d+)[\0\t\n\f\r ]*(\d+)[\0\t\n\f\r ]*obj/;
 	    // Check that initial characters make up an indirect object "header"
 	    var objIdx = arrayIndexOf(trimmed, 'obj');
@@ -14570,7 +14594,7 @@
 	    var _fullMatch = result[0], objNum = result[1], genNum = result[2];
 	    // Extract the bytes making up the object itself
 	    var endobjIdx = arrayIndexOf(trimmed, 'endobj', objIdx);
-	    var content = trimmed.subarray(objIdx + 3, endobjIdx);
+	    var content = trimArrayAndRemoveComments(trimmed.subarray(objIdx + 3, endobjIdx));
 	    // Try to parse the object bytes
 	    var _a = parseDictOrStream(content, index, parseHandlers) ||
 	        parseArray(content, index, parseHandlers) ||
@@ -14582,8 +14606,9 @@
 	        parseBool(content, parseHandlers) ||
 	        parseNull(content, parseHandlers) ||
 	        error('Failed to parse object contents'), contentObj = _a[0], r = _a[1];
-	    if (trimArray(r).length > 0)
+	    if (trimArrayAndRemoveComments(r).length > 0) {
 	        error('Incorrectly parsed object contents');
+	    }
 	    var indirectObj = PDFIndirectObject.of(contentObj).setReferenceNumbers(Number(objNum), Number(genNum));
 	    if (parseHandlers.onParseIndirectObj) {
 	        parseHandlers.onParseIndirectObj(indirectObj);
@@ -14606,7 +14631,7 @@
 	 */
 	var parseTrailer = function (input, index, parseHandlers) {
 	    if (parseHandlers === void 0) { parseHandlers = {}; }
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    var trailerRegex = /^trailer[\n|\r| ]*([^]+)startxref[\n|\r| ]+?(\d+)[\n|\r| ]+?%%EOF/;
 	    // Find the nearest "%%EOF" of the input and match the regex up to that index
 	    var eofIdx = arrayIndexOf(trimmed, '%%EOF');
@@ -14636,7 +14661,7 @@
 	 */
 	var parseTrailerWithoutDict = function (input, index, parseHandlers) {
 	    if (parseHandlers === void 0) { parseHandlers = {}; }
-	    var trimmed = trimArray(input);
+	    var trimmed = trimArrayAndRemoveComments(input);
 	    var trailerRegex = /^startxref[\n|\r| ]+?(\d+)[\n|\r| ]+?%%EOF/;
 	    // Find the nearest "%%EOF" of the input and match the regex up to that index
 	    var eofIdx = arrayIndexOf(trimmed, '%%EOF');
@@ -14838,8 +14863,6 @@
 	 * as needed. Rather, the whole document is parsed and stored in memory at once.
 	 */
 	var parseDocument = function (input, index, parseHandlers) {
-	    // TODO: Figure out way to clean comments without messing stream content up
-	    // const cleaned = removeComments(input);
 	    var cleaned = input;
 	    // Parse the document header
 	    var remainder;
@@ -17527,7 +17550,7 @@
 	        objectNumber: object.reference.objectNumber,
 	        generationNumber: object.reference.generationNumber,
 	        startOffset: startingOffset,
-	        endOffset: (startingOffset += object.bytesSize()),
+	        endOffset: startingOffset += object.bytesSize(),
 	    }); });
 	};
 	var PDFDocumentWriter = /** @class */ (function () {
@@ -17570,7 +17593,7 @@
 	        var table = PDFXRefTableFactory.forOffsets(sortedOffsets);
 	        var tableOffset = last_1(offsets).endOffset;
 	        var trailer = PDFTrailer.from(tableOffset, PDFDictionary$$1.from({
-	            Size: PDFNumber.fromNumber(last_1(offsets).objectNumber + 1),
+	            Size: PDFNumber.fromNumber(last_1(sortedOffsets).objectNumber + 1),
 	            Root: catalogRef,
 	        }, pdfDoc.index));
 	        /* ===== (3) Create buffer and copy objects into it ===== */
@@ -19424,7 +19447,7 @@
 	/* ======== Graphics state operators ======== */
 	var Q = PDFOperators.Q, q$1 = PDFOperators.q;
 	var cos = Math.cos, sin = Math.sin, tan = Math.tan;
-	var degreesToRadians = function (degrees) { return degrees * Math.PI / 180; };
+	var degreesToRadians = function (degrees) { return (degrees * Math.PI) / 180; };
 	var translate = function (xPos, yPos) {
 	    return cm.of(1, 0, 0, 1, xPos, yPos);
 	};

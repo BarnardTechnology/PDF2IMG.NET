@@ -234,19 +234,47 @@ namespace BarnardTech.PDF2IMG
 
         public async Task<bool> InsertImageAsync(string imageName, Bitmap image, int pageNumber, float X, float Y, float Width, float Height)
         {
+            float outX;
+            float outY;
+            float outWidth;
+            float outHeight;
+
+            if (pdfPages[pageNumber].Rotate == 90 || pdfPages[pageNumber].Rotate == 270)
+            {
+                outWidth = Width;
+                outHeight = Height;
+                outX = Y + Height;
+                outY = X;
+            }
+            else
+            {
+                outWidth = Width;
+                outHeight = Height;
+                outX = X;
+                outY = pdfPages[pageNumber].MediaBox.Height - Y - Height;
+            }
+
+            Console.WriteLine("Page rotation: " + pdfPages[pageNumber].Rotate);
             // reverse Y coordinate
-            Y = pdfPages[pageNumber].MediaBox.Height - Y - Height;
+            //Y = pdfPages[pageNumber].MediaBox.Height - Y - Height;
 
             using (MemoryStream mStream = new MemoryStream())
             {
                 image.Save(mStream, System.Drawing.Imaging.ImageFormat.Png);
                 mStream.Position = 0;
                 string asBase64 = Convert.ToBase64String(mStream.ToArray());
-                return await chromePage.EvaluateFunctionAsync<bool>("insertPNG", new object[] { asBase64, imageName, pageNumber, X, Y, Width, Height });
+                return await chromePage.EvaluateFunctionAsync<bool>("insertPNG", new object[] { asBase64, imageName, pageNumber, outX, outY, outWidth, outHeight, pdfPages[pageNumber].Rotate });
             }
         }
 
-        public async void SavePDFAsync(string filename)
+        public bool SavePDF(string filename)
+        {
+            Task<bool> t = SavePDFAsync(filename);
+            t.Wait();
+            return t.Result;
+        }
+
+        public async Task<bool> SavePDFAsync(string filename)
         {
             string base64string = await chromePage.EvaluateFunctionAsync<string>("savePDF", new object[] { });
             byte[] pdfdata = Convert.FromBase64String(base64string);
@@ -258,6 +286,13 @@ namespace BarnardTech.PDF2IMG
                     bStream.Write(pdfdata);
                 }
             }
+
+            return true;
+        }
+
+        public PDFPage GetPage(int pageNumber)
+        {
+            return pdfPages[pageNumber];
         }
 
         public void Dispose()
