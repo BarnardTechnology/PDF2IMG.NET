@@ -28,8 +28,9 @@ namespace PDF2IMGTest
                 pRender.RenderPage(i, 1280, 1280).Save("capture_" + (i + 1) + ".png");
             }
 
-            AddImageToPDF("maxresdefault.jpg");
+            //AddImageToPDF("maxresdefault.jpg");
 
+            pRender.Dispose();
             Console.WriteLine("Done.");
         }
 

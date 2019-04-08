@@ -75,6 +75,12 @@ namespace BarnardTech.PDF2IMG
             _onReady = onReady;
             chromeBrowser = browser;
             chromePage = page;
+
+            chromeBrowser.Disconnected += (sender, e) =>
+            {
+                chromeBrowser.Process.Kill();
+            };
+
             fileResourceHandlerFactory = new FileResourceHandlerFactory("pdfviewer", "host", Directory.GetCurrentDirectory());
             page.Request += Page_Request;
             page.RequestFinished += Page_RequestFinished;
@@ -457,6 +463,7 @@ namespace BarnardTech.PDF2IMG
 
             if (chromeBrowser != null)
             {
+                chromeBrowser.Disconnect();
                 chromeBrowser.CloseAsync();
             }
         }
