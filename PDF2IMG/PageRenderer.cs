@@ -78,7 +78,10 @@ namespace BarnardTech.PDF2IMG
 
             chromeBrowser.Disconnected += (sender, e) =>
             {
-                chromeBrowser.Process.Kill();
+                if (!chromeBrowser.Process.HasExited)
+                {
+                    chromeBrowser.Process.Kill();
+                }
             };
 
             fileResourceHandlerFactory = new FileResourceHandlerFactory("pdfviewer", "host", Directory.GetCurrentDirectory());
