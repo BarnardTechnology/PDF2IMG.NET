@@ -319,7 +319,9 @@ namespace BarnardTech.PDF2IMG
         public void LoadPDF(byte[] buffer)
         {
             pdfLoadEvent.Reset();
-            LoadPDFAsync(buffer);
+            //LoadPDFAsync(buffer);
+            MemoryStream mStream = new MemoryStream(buffer);
+            LoadPDFAsync(mStream);
             pdfLoadEvent.WaitOne();
         }
 
@@ -341,14 +343,28 @@ namespace BarnardTech.PDF2IMG
         public async void LoadPDFAsync(string filename)
         {
             FileStream fStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
-            byte[] buffer = new byte[fStream.Length];
+            await chromePage.EvaluateFunctionAsync("clearBuffer", new object[0]);
             byte[] chunk = new byte[4096];
-            while (fStream.Position < fStream.Length) {
+            while (fStream.Position < fStream.Length)
+            {
                 long offset = fStream.Position;
                 int bytes = await fStream.ReadAsync(chunk, 0, chunk.Length);
-                Array.Copy(chunk, 0, buffer, offset, bytes);
+                var asBase64 = Convert.ToBase64String(chunk, 0, bytes);
+                await chromePage.EvaluateFunctionAsync("addBase64DataToBuffer", new[] { asBase64 });
             }
-            LoadPDFAsync(buffer);
+            PageCount = await chromePage.EvaluateFunctionAsync<int>("openPdfFromBuffer", new object[0]);
+
+            Console.WriteLine("PDF Loaded.");
+            _pdfLoadWaiting = false;
+            pdfLoadEvent.Set();
+
+            if (OnPDFLoaded != null)
+            {
+                new Task(() =>
+                {
+                    OnPDFLoaded(this, new EventArgs());
+                }).Start();
+            }
         }
 
         /// <summary>
@@ -357,45 +373,58 @@ namespace BarnardTech.PDF2IMG
         /// <param name="stream">The stream containing the PDF data.</param>
         public async void LoadPDFAsync(Stream stream)
         {
-            byte[] buffer = new byte[stream.Length - stream.Position];
-            byte[] chunk = new byte[4096];
+            await chromePage.EvaluateFunctionAsync("clearBuffer", new object[0]);
+            byte[] chunk = new byte[1048576];
             while (stream.Position < stream.Length)
             {
                 long offset = stream.Position;
                 int bytes = await stream.ReadAsync(chunk, 0, chunk.Length);
-                Array.Copy(chunk, 0, buffer, offset, bytes);
+                var asBase64 = Convert.ToBase64String(chunk, 0, bytes);
+                await chromePage.EvaluateFunctionAsync("addBase64DataToBuffer", new[] { asBase64 });
             }
-            LoadPDFAsync(buffer);
-        }
+            PageCount = await chromePage.EvaluateFunctionAsync<int>("openPdfFromBuffer", new object[0]);
 
-        /// <summary>
-        /// Loads a PDF from a byte array.
-        /// </summary>
-        /// <param name="buffer">The byte array containing the PDF data.</param>
-        public async void LoadPDFAsync(byte[] buffer)
-        {
-            if (!_pdfLoadWaiting)
+            Console.WriteLine("PDF Loaded.");
+            _pdfLoadWaiting = false;
+            pdfLoadEvent.Set();
+
+            if (OnPDFLoaded != null)
             {
-                _pdfLoadWaiting = true;
-                var asBase64 = Convert.ToBase64String(buffer);
-                PageCount = await chromePage.EvaluateFunctionAsync<int>("openPdfAsBase64", new[] { asBase64 });
-                Console.WriteLine("PDF Loaded.");
-                _pdfLoadWaiting = false;
-                pdfLoadEvent.Set();
-
-                if (OnPDFLoaded != null)
+                new Task(() =>
                 {
-                    new Task(() =>
-                    {
-                        OnPDFLoaded(this, new EventArgs());
-                    }).Start();
-                }
-            }
-            else
-            {
-                throw new Exception("A PDF file is already waiting to be loaded.");
+                    OnPDFLoaded(this, new EventArgs());
+                }).Start();
             }
         }
+
+        ///// <summary>
+        ///// Loads a PDF from a byte array.
+        ///// </summary>
+        ///// <param name="buffer">The byte array containing the PDF data.</param>
+        //public async void LoadPDFAsync(byte[] buffer)
+        //{
+        //    if (!_pdfLoadWaiting)
+        //    {
+        //        _pdfLoadWaiting = true;
+        //        var asBase64 = Convert.ToBase64String(buffer);
+        //        PageCount = await chromePage.EvaluateFunctionAsync<int>("openPdfAsBase64", new[] { asBase64 });
+        //        Console.WriteLine("PDF Loaded.");
+        //        _pdfLoadWaiting = false;
+        //        pdfLoadEvent.Set();
+
+        //        if (OnPDFLoaded != null)
+        //        {
+        //            new Task(() =>
+        //            {
+        //                OnPDFLoaded(this, new EventArgs());
+        //            }).Start();
+        //        }
+        //    }
+        //    else
+        //    {
+        //        throw new Exception("A PDF file is already waiting to be loaded.");
+        //    }
+        //}
 
         public async Task<PageViewport> GetPageViewport(int pageNumber, float pageScale)
         {
