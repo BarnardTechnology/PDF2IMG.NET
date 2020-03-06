@@ -290,6 +290,21 @@ namespace BarnardTech.PDF2IMG
             return true;
         }
 
+        public bool SavePDFToStream(Stream stream)
+        {
+            Task<bool> t = SavePDFToStreamAsync(stream);
+            t.Wait();
+            return t.Result;
+        }
+
+        public async Task<bool> SavePDFToStreamAsync(Stream stream)
+        {
+            string base64string = await chromePage.EvaluateFunctionAsync<string>("savePDF", new object[] { });
+            byte[] pdfdata = Convert.FromBase64String(base64string);
+            stream.Write(pdfdata, 0, pdfdata.Length);
+            return true;
+        }
+
         public PDFPage GetPage(int pageNumber)
         {
             return pdfPages[pageNumber];
