@@ -24,7 +24,7 @@
                 });
             };
 
-            window.getPageDimensions = function (pageNumber) {
+            window.getMediaBox = function (pageNumber) {
                 return new Promise((resolve, reject) => {
                     if (pdfPages !== null) {
                         if (pageNumber > -1 && pageNumber < pdfPages.length) {
@@ -68,30 +68,30 @@
                 });
             };
 
-            window.getMediaBox = function (pageNumber) {
-                return new Promise((resolve, reject) => {
-                    if (pdfPages != null) {
-                        if (pageNumber > -1 && pageNumber < pdfPages.length) {
-                            var mediaBox = pdfPages[pageNumber].get("MediaBox");
-                            var rect = {
-                                X: mediaBox.array[0].number,
-                                Y: mediaBox.array[1].number,
-                                Width: mediaBox.array[2].number,
-                                Height: mediaBox.array[3].number
-                            };
-                            resolve(JSON.stringify(rect));
-                        }
-                        else
-                        {
-                            reject();
-                        }
-                    }
-                    else
-                    {
-                        reject();
-                    }
-                });
-            };
+            //window.getMediaBox = function (pageNumber) {
+            //    return new Promise((resolve, reject) => {
+            //        if (pdfPages != null) {
+            //            if (pageNumber > -1 && pageNumber < pdfPages.length) {
+            //                var mediaBox = pdfPages[pageNumber].get("MediaBox");
+            //                var rect = {
+            //                    X: mediaBox.array[0].number,
+            //                    Y: mediaBox.array[1].number,
+            //                    Width: mediaBox.array[2].number,
+            //                    Height: mediaBox.array[3].number
+            //                };
+            //                resolve(JSON.stringify(rect));
+            //            }
+            //            else
+            //            {
+            //                reject();
+            //            }
+            //        }
+            //        else
+            //        {
+            //            reject();
+            //        }
+            //    });
+            //};
 
             window.getRotation = function (pageNumber) {
                 return new Promise((resolve, reject) => {
