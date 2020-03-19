@@ -44,7 +44,7 @@ namespace BarnardTech.PDF2IMG
 
                 var browser = await Puppeteer.LaunchAsync(new LaunchOptions
                 {
-                    Headless = true
+                    Headless = false
                 });
 
                 var page = await browser.NewPageAsync();

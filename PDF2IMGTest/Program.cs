@@ -17,20 +17,20 @@ namespace PDF2IMGTest
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Render pages...");
-            pRender = new PageRenderer();
-            ////pRender.OnPDFLoaded += PRender_OnPDFLoaded;
-            Console.WriteLine("Loading PDF");
-            pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
-            Console.WriteLine("Getting page images...");
-            for (int i = 0; i < pRender.PageCount; i++)
-            {
-                pRender.RenderPage(i, 1280, 1280).Save("capture_" + (i + 1) + ".png");
-            }
+            //Console.WriteLine("Render pages...");
+            //pRender = new PageRenderer();
+            //////pRender.OnPDFLoaded += PRender_OnPDFLoaded;
+            //Console.WriteLine("Loading PDF");
+            //pRender.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
+            //Console.WriteLine("Getting page images...");
+            //for (int i = 0; i < pRender.PageCount; i++)
+            //{
+            //    pRender.RenderPage(i, 1280, 1280).Save("capture_" + (i + 1) + ".png");
+            //}
 
-            //AddImageToPDF("maxresdefault.jpg");
+            AddImageToPDF("maxresdefault.jpg");
 
-            pRender.Dispose();
+            //pRender.Dispose();
             Console.WriteLine("Done.");
         }
 
@@ -41,15 +41,15 @@ namespace PDF2IMGTest
         public static void AddImageToPDF(string bitmapFilename)
         {
             Console.WriteLine("Add image to PDF...");
-            Bitmap bmp = new Bitmap(bitmapFilename);
+            //Bitmap bmp = new Bitmap(bitmapFilename);
             PDFDocument pDoc = new PDFDocument();
             Console.WriteLine("Loading for editing...");
             pDoc.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
-            PDFPage pPage = pDoc.GetPage(0);
-            Console.WriteLine("Inserting image...");
-            pDoc.InsertImage("testimage", bmp, 0, (pPage.Width / 2) - 75, (pPage.Height / 2) - 50, 150, 100);
-            Console.WriteLine("Saving...");
-            pDoc.SavePDF("pdfoutput.pdf");
+            //PDFPage pPage = pDoc.GetPage(0);
+            //Console.WriteLine("Inserting image...");
+            //pDoc.InsertImage("testimage", bmp, 0, (pPage.Width / 2) - 75, (pPage.Height / 2) - 50, 150, 100);
+            //Console.WriteLine("Saving...");
+            //pDoc.SavePDF("pdfoutput.pdf");
             Console.WriteLine("Done...");
         }
 
