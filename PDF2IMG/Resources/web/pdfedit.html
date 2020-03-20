@@ -16,11 +16,17 @@
                         bytes[i] = binary_string.charCodeAt(i);
                     }
 
-                    pdfDoc = PDFLib.PDFDocumentFactory.load(bytes);
-                    pdfPages = pdfDoc.getPages();
-                    console.log('loaded.');
-                    console.log(pdfPages);
-                    resolve(pdfPages.length);
+                    try {
+                        pdfDoc = PDFLib.PDFDocumentFactory.load(bytes);
+                        pdfPages = pdfDoc.getPages();
+                        console.log('loaded.');
+                        console.log(pdfPages);
+                        resolve(pdfPages.length);
+                    }
+                    catch (ex) {
+                        reject(ex);
+                        return;
+                    }                   
                 });
             };
 

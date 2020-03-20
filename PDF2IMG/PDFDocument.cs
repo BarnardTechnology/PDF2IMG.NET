@@ -184,7 +184,14 @@ namespace BarnardTech.PDF2IMG
             {
                 _pdfLoadWaiting = true;
                 var asBase64 = Convert.ToBase64String(buffer);
-                PageCount = await chromePage.EvaluateFunctionAsync<int>("loadPDF", new[] { asBase64 });
+                try
+                {
+                    PageCount = await chromePage.EvaluateFunctionAsync<int>("loadPDF", new[] { asBase64 });
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Cannot load PDF", ex);
+                }
                 Console.WriteLine("PDF Loaded.");
 
                 for (int i = 0; i < PageCount; i++)
