@@ -17,11 +17,14 @@
                     }
 
                     try {
-                        pdfDoc = PDFLib.PDFDocumentFactory.load(bytes);
-                        pdfPages = pdfDoc.getPages();
-                        console.log('loaded.');
-                        console.log(pdfPages);
-                        resolve(pdfPages.length);
+                        PDFLib.PDFDocument.load(bytes)
+                            .then((pDoc) => {
+                                pdfDoc = pDoc;
+                                pdfPages = pdfDoc.getPages();
+                                console.log('loaded.');
+                                console.log(pdfPages);
+                                resolve(pdfPages.length);
+                            });
                     }
                     catch (ex) {
                         reject(ex);
@@ -38,6 +41,7 @@
 
                             let mediaBox;
 
+                            /*
                             // Check for MediaBox on the page itself
                             const hasMediaBox = !!page.getMaybe('MediaBox');
                             if (hasMediaBox) {
@@ -51,15 +55,18 @@
                                     mediaBox = parent.index.lookup(parent.get('MediaBox'));
                                 }
                             }, true);
+                            */
+
+                            mediaBox = page.getMediaBox();
 
                             // This should never happen in valid PDF files
                             if (!mediaBox) throw new Error('Page Tree is missing MediaBox');
                             
                             var rect = {
-                                X: mediaBox.array[0].number,
-                                Y: mediaBox.array[1].number,
-                                Width: mediaBox.array[2].number,
-                                Height: mediaBox.array[3].number
+                                X: mediaBox.x,
+                                Y: mediaBox.y,
+                                Width: mediaBox.width,
+                                Height: mediaBox.height
                             };
                             resolve(JSON.stringify(rect));
                         }
@@ -136,22 +143,34 @@
                             pngBytes[i] = binary_string.charCodeAt(i);
                         }
 
-                        const [pngImage, pngDims] = pdfDoc.embedPNG(pngBytes);
-                        const contentStream = pdfDoc.register(
-                            pdfDoc.createContentStream(
-                                PDFLib.drawImage(pngName, {
-                                    x: x,
-                                    y: y,
-                                    width: width,
-                                    height: height,
-                                    rotateDegrees: rotation,
-                                    skewDegrees: { xAxis: 0, yAxis: 0 }
-                                })
-                            )
-                        );
-                        var page = pdfPages[pageNumber];
-                        page.addImageObject(pngName, pngImage).addContentStreams(contentStream);
-                        resolve(true);
+                        //const [pngImage, pngDims] = pdfDoc.embedPng(pngBytes);
+                        pdfDoc.embedPng(pngBytes)
+                            .then((pngImage) => {
+                                //const contentStream = pdfDoc.register(
+                                //    pdfDoc.createContentStream(
+                                //        PDFLib.drawImage(pngName, {
+                                //            x: x,
+                                //            y: y,
+                                //            width: width,
+                                //            height: height,
+                                //            rotateDegrees: rotation,
+                                //            skewDegrees: { xAxis: 0, yAxis: 0 }
+                                //        })
+                                //    )
+                                //);
+                                var page = pdfPages[pageNumber];
+                                page.drawImage(pngImage,
+                                    {
+                                        x: x,
+                                        y: y,
+                                        width: width,
+                                        height: height,
+                                        rotate: PDFLib.degrees(rotation)
+                                    }
+                                );
+                                //page.addImageObject(pngName, pngImage).addContentStreams(contentStream);
+                                resolve(true);
+                            });
                     } else {
                         resolve(false);
                         reject();
@@ -171,25 +190,33 @@
             window.savePDF = function () {
                 return new Promise((resolve, reject) => {
                     if (pdfDoc !== null) {
-                        var pdfBytes = PDFLib.PDFDocumentWriter.saveToBytes(pdfDoc);
-                        console.log('pdf: ' + pdfBytes.length);
-                        //var decoder = new TextDecoder('utf-8');
-                        //var byte_string = String.fromCharCode.apply(null, pdfBytes);
-                        //console.log('byte_string: ' + byte_string.length);
-                        //var b = btoa(byte_string);
-                        //var b = btoa(decoder.decode(pdfBytes));
-                        var b = btoa(pdfBytes.reduce((data, byte) => {
-                            return data + String.fromCharCode(byte);
-                        }, ''));
-                        //var b = btoa(Uint8ToString(pdfBytes));
-                        console.log(b.length);
-                        resolve(b);
-                        //resolve(pdfBytes);
+                        pdfDoc.saveAsBase64()
+                            .then((b) => {
+                                resolve(b);
+                            })
+                            .catch((e) => {
+                                reject(e);
+                            });
+
+                        //var pdfBytes = PDFLib.PDFDocumentWriter.saveToBytes(pdfDoc);
+                        //console.log('pdf: ' + pdfBytes.length);
+                        ////var decoder = new TextDecoder('utf-8');
+                        ////var byte_string = String.fromCharCode.apply(null, pdfBytes);
+                        ////console.log('byte_string: ' + byte_string.length);
+                        ////var b = btoa(byte_string);
+                        ////var b = btoa(decoder.decode(pdfBytes));
+                        //var b = btoa(pdfBytes.reduce((data, byte) => {
+                        //    return data + String.fromCharCode(byte);
+                        //}, ''));
+                        ////var b = btoa(Uint8ToString(pdfBytes));
+                        //console.log(b.length);
+                        //resolve(b);
+                        ////resolve(pdfBytes);
                     } else {
-                        reject();
+                        reject("PDFDoc == null");
                     }
                 });
-            }
+            };
 
         </script>
     </body>

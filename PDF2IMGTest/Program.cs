@@ -28,7 +28,7 @@ namespace PDF2IMGTest
             //    pRender.RenderPage(i, 1280, 1280).Save("capture_" + (i + 1) + ".png");
             //}
 
-            AddImageToPDF("maxresdefault.jpg");
+            AddImageToPDF("");
 
             //pRender.Dispose();
             Console.WriteLine("Done.");
@@ -41,15 +41,31 @@ namespace PDF2IMGTest
         public static void AddImageToPDF(string bitmapFilename)
         {
             Console.WriteLine("Add image to PDF...");
-            //Bitmap bmp = new Bitmap(bitmapFilename);
+
+            Bitmap bmp;
+            if(string.IsNullOrEmpty(bitmapFilename))
+            {
+                bmp = new Bitmap(500, 500);
+                for (int x = 0; x < 500; x++)
+                {
+                    for (int y = 0; y < 500; y++)
+                    {
+                        bmp.SetPixel(x, y, Color.Black);
+                    }
+                }
+            }
+            else
+            {
+                bmp = new Bitmap(bitmapFilename);
+            }
             PDFDocument pDoc = new PDFDocument();
             Console.WriteLine("Loading for editing...");
             pDoc.LoadPDF("compressed.tracemonkey-pldi-09.pdf");
-            //PDFPage pPage = pDoc.GetPage(0);
-            //Console.WriteLine("Inserting image...");
-            //pDoc.InsertImage("testimage", bmp, 0, (pPage.Width / 2) - 75, (pPage.Height / 2) - 50, 150, 100);
-            //Console.WriteLine("Saving...");
-            //pDoc.SavePDF("pdfoutput.pdf");
+            PDFPage pPage = pDoc.GetPage(0);
+            Console.WriteLine("Inserting image...");
+            pDoc.InsertImage("testimage", bmp, 0, (pPage.Width / 2) - 75, (pPage.Height / 2) - 50, 150, 100);
+            Console.WriteLine("Saving...");
+            pDoc.SavePDF("pdfoutput.pdf");
             Console.WriteLine("Done...");
         }
 
