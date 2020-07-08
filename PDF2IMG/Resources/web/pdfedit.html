@@ -24,6 +24,9 @@
                                 console.log('loaded.');
                                 console.log(pdfPages);
                                 resolve(pdfPages.length);
+                            })
+                            .catch((err) => {
+                                reject(err);
                             });
                     }
                     catch (ex) {
