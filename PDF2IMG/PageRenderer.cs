@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using PuppeteerSharp;
+using Nito.AsyncEx.Synchronous;
 
 namespace BarnardTech.PDF2IMG
 {
@@ -227,7 +228,7 @@ namespace BarnardTech.PDF2IMG
         public Bitmap RenderPage(int pageNumber, double pageScale)
         {
             Task<Bitmap> t = RenderPageAsync(pageNumber, pageScale);
-            t.Wait();
+            t.WaitAndUnwrapException();
             return t.Result;
         }
 
@@ -244,7 +245,7 @@ namespace BarnardTech.PDF2IMG
         public Bitmap RenderPage(int pageNumber, int maxWidth, int maxHeight)
         {
             Task<Bitmap> t = RenderPageAsync(pageNumber, maxWidth, maxHeight);
-            t.Wait();
+            t.WaitAndUnwrapException();
             return t.Result;
         }
 
