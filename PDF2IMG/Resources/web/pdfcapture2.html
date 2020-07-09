@@ -83,21 +83,29 @@
                 pageNumber = parseInt(pageNumber);
                 pageScale = parseFloat(pageScale);
                 console.log("Rendering page " + pageNumber);
-                pdfDocument.getPage(pageNumber).then(function (page) {
-                    var viewport = page.getViewport(pageScale);
-                    renderCanvas.width = viewport.width;
-                    renderCanvas.height = viewport.height;
+                pdfDocument.getPage(pageNumber)
+                    .then(function (page) {
+                        var viewport = page.getViewport(pageScale);
+                        renderCanvas.width = viewport.width;
+                        renderCanvas.height = viewport.height;
 
-                    var renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
+                        var renderContext = {
+                            canvasContext: context,
+                            viewport: viewport
+                        };
 
-                    page.render(renderContext).promise.then(() => {
-                        console.log('page rendered');
-                        resolve(true);
+                        page.render(renderContext).promise
+                            .then(() => {
+                                console.log('page rendered');
+                                resolve(true);
+                            })
+                            .catch((err) => {
+                                reject(err);
+                            });
+                    })
+                    .catch((err) => {
+                        reject(err);
                     });
-                });
             });
         };
 
