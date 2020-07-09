@@ -5,6 +5,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using PuppeteerSharp;
+using Nito.AsyncEx;
+using Nito.AsyncEx.Synchronous;
 
 namespace BarnardTech.PDF2IMG
 {
@@ -112,9 +114,11 @@ namespace BarnardTech.PDF2IMG
         public void LoadPDF(string filename)
         {
             pdfPages = new List<PDFPage>();
-            pdfLoadEvent.Reset();
-            LoadPDFAsync(filename);
-            pdfLoadEvent.WaitOne();
+            //pdfLoadEvent.Reset();
+            var task = LoadPDFAsync(filename);
+            task.WaitAndUnwrapException();
+            //LoadPDFAsync(filename);
+            //pdfLoadEvent.WaitOne();
         }
 
         /// <summary>
@@ -123,9 +127,10 @@ namespace BarnardTech.PDF2IMG
         /// <param name="buffer">The byte array containing the PDF data.</param>
         public void LoadPDF(byte[] buffer)
         {
-            pdfLoadEvent.Reset();
-            LoadPDFAsync(buffer);
-            pdfLoadEvent.WaitOne();
+            //pdfLoadEvent.Reset();
+            var task = LoadPDFAsync(buffer);
+            task.WaitAndUnwrapException();
+            //pdfLoadEvent.WaitOne();
         }
 
         /// <summary>
@@ -134,16 +139,17 @@ namespace BarnardTech.PDF2IMG
         /// <param name="stream">The stream containing the PDF data.</param>
         public void LoadPDF(Stream stream)
         {
-            pdfLoadEvent.Reset();
-            LoadPDFAsync(stream);
-            pdfLoadEvent.WaitOne();
+            //pdfLoadEvent.Reset();
+            var task = LoadPDFAsync(stream);
+            task.WaitAndUnwrapException();
+            //pdfLoadEvent.WaitOne();
         }
 
         /// <summary>
         /// Loads a PDF from disk given the requested filename.
         /// </summary>
         /// <param name="filename">The filename of the PDF.</param>
-        public async void LoadPDFAsync(string filename)
+        public async Task<bool> LoadPDFAsync(string filename)
         {
             FileStream fStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
             byte[] buffer = new byte[fStream.Length];
@@ -154,14 +160,14 @@ namespace BarnardTech.PDF2IMG
                 int bytes = await fStream.ReadAsync(chunk, 0, chunk.Length);
                 Array.Copy(chunk, 0, buffer, offset, bytes);
             }
-            LoadPDFAsync(buffer);
+            return await LoadPDFAsync(buffer);
         }
 
         /// <summary>
         /// Loads a PDF from a stream. Reading begins from wherever the stream's position is currently set - it will not be reset to 0.
         /// </summary>
         /// <param name="stream">The stream containing the PDF data.</param>
-        public async void LoadPDFAsync(Stream stream)
+        public async Task<bool> LoadPDFAsync(Stream stream)
         {
             byte[] buffer = new byte[stream.Length - stream.Position];
             byte[] chunk = new byte[4096];
@@ -171,14 +177,14 @@ namespace BarnardTech.PDF2IMG
                 int bytes = await stream.ReadAsync(chunk, 0, chunk.Length);
                 Array.Copy(chunk, 0, buffer, offset, bytes);
             }
-            LoadPDFAsync(buffer);
+            return await LoadPDFAsync(buffer);
         }
 
         /// <summary>
         /// Loads a PDF from a byte array.
         /// </summary>
         /// <param name="buffer">The byte array containing the PDF data.</param>
-        public async void LoadPDFAsync(byte[] buffer)
+        public async Task<bool> LoadPDFAsync(byte[] buffer)
         {
             if (!_pdfLoadWaiting)
             {
@@ -215,6 +221,8 @@ namespace BarnardTech.PDF2IMG
                         OnPDFLoaded(this, new EventArgs());
                     }).Start();
                 }
+
+                return true;
             }
             else
             {
