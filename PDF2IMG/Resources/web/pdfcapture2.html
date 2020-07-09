@@ -112,47 +112,68 @@
         window.getTextContent = function (pageNumber) {
             return new Promise((resolve, reject) => {
                 pageNumber = parseInt(pageNumber);
-                pdfDocument.getPage(pageNumber).then(
-                    (page) => {
-                        page.getTextContent().then(
-                            (content) => {
-                                content.viewport = page.getViewport(1);
-                                console.log(content);
-                                resolve(JSON.stringify(content));
-                            }
-                        );
-                    }
-                );
+                pdfDocument.getPage(pageNumber)
+                    .then(
+                        (page) => {
+                            page.getTextContent()
+                                .then(
+                                    (content) => {
+                                        content.viewport = page.getViewport(1);
+                                        console.log(content);
+                                        resolve(JSON.stringify(content));
+                                    }
+                                )
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                        }
+                    )
+                    .catch((err) => {
+                        reject(err);
+                    });
             });
         };
 
         window.getText = function (pageNumber) {
             return new Promise((resolve, reject) => {
                 pageNumber = parseInt(pageNumber);
-                pdfDocument.getPage(pageNumber).then(
-                    (page) => {
-                        page.getTextContent().then(
-                            (content) => {
-                                var outStr = "";
-                                for (var i = 0; i < content.items.length; i++) {
-                                    outStr += content.items[i].str + " ";
-                                }
-                                resolve(outStr);
-                            }
-                        );
-                    }
-                );
+                pdfDocument.getPage(pageNumber)
+                    .then(
+                        (page) => {
+                            page.getTextContent()
+                                .then((content) => {
+                                    var outStr = "";
+                                    for (var i = 0; i < content.items.length; i++) {
+                                        outStr += content.items[i].str + " ";
+                                    }
+                                    resolve(outStr);
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                        })
+                    .catch((err) => {
+                        reject(err);
+                    });
             });
         };
 
         window.getAnnotations = function (pageNumber) {
             return new Promise((resolve, reject) => {
                 pageNumber = parseInt(pageNumber);
-                pdfDocument.getPage(pageNumber).then(
-                    (page) => {
-                        page.getAnnotations().then((annots) => {
-                            resolve(JSON.stringify(annots));
-                        });
+                pdfDocument.getPage(pageNumber)
+                    .then(
+                        (page) => {
+                            page.getAnnotations()
+                                .then((annots) => {
+                                    resolve(JSON.stringify(annots));
+                                })
+                                .catch((err) => {
+                                    reject(err);
+                                });
+                    })
+                    .catch((err) => {
+                        reject(err);
                     });
             });
         };
