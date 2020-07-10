@@ -40,12 +40,16 @@
         // opens a PDF from our pre-loaded internal buffer
         window.openPdfFromBuffer = function () {
             return new Promise((resolve, reject) => {
-                PDFJS.getDocument(pdfBuffer).then(function (pdf) {
-                    pdfDocument = pdf;
-                    console.log("PDF Loaded!");
-                    console.log(pdf);
-                    resolve(pdf.numPages);
-                });
+                PDFJS.getDocument(pdfBuffer)
+                    .then(function (pdf) {
+                        pdfDocument = pdf;
+                        console.log("PDF Loaded!");
+                        console.log(pdf);
+                        resolve(pdf.numPages);
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
             });
         };
 
@@ -58,12 +62,16 @@
                     bytes[i] = binary_string.charCodeAt(i);
                 }
 
-                PDFJS.getDocument(bytes).then(function (pdf) {
-                    pdfDocument = pdf;
-                    console.log("PDF Loaded!");
-                    console.log(pdf);
-                    resolve(pdf.numPages);
-                });
+                PDFJS.getDocument(bytes)
+                    .then(function (pdf) {
+                        pdfDocument = pdf;
+                        console.log("PDF Loaded!");
+                        console.log(pdf);
+                        resolve(pdf.numPages);
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
             });
         };
 
@@ -71,10 +79,14 @@
             return new Promise((resolve, reject) => {
                 pageNumber = parseInt(pageNumber);
                 pageScale = parseFloat(pageScale);
-                pdfDocument.getPage(pageNumber).then((page) => {
-                    var viewport = page.getViewport(pageScale);
-                    resolve(JSON.stringify(viewport));
-                });
+                pdfDocument.getPage(pageNumber)
+                    .then((page) => {
+                        var viewport = page.getViewport(pageScale);
+                        resolve(JSON.stringify(viewport));
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
             });
         };
 
