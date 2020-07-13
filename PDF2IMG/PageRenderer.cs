@@ -41,13 +41,13 @@ namespace BarnardTech.PDF2IMG
         /// that when creating a PageRenderer for the first time, there may be a significant wait while Chrome is
         /// downloaded.
         /// </summary>
-        public PageRenderer()
+        public PageRenderer(string browserPath)
         {
             AutoResetEvent readyEvent = new AutoResetEvent(false);
 
             new Task(async () =>
             {
-                await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
+                await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
 
                 var browser = await Puppeteer.LaunchAsync(new LaunchOptions
                 {
@@ -128,9 +128,9 @@ namespace BarnardTech.PDF2IMG
         /// </summary>
         /// <param name="onReady">A callback action which fires when the PageRenderer is ready.</param>
         /// <returns>The PageRenderer object.</returns>
-        public async static Task<PageRenderer> CreateAsync(Action onReady)
+        public async static Task<PageRenderer> CreateAsync(Action onReady, string browserPath)
         {
-            await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
+            await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
 
             var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
