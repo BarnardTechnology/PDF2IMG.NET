@@ -36,13 +36,20 @@ namespace BarnardTech.PDF2IMG
         /// that when creating a PageRenderer for the first time, there may be a significant wait while Chrome is
         /// downloaded.
         /// </summary>
-        public PDFDocument(string browserPath)
+        public PDFDocument(string browserPath = "")
         {
             AutoResetEvent readyEvent = new AutoResetEvent(false);
 
             new Task(async () =>
             {
-                await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
+                if (string.IsNullOrEmpty(browserPath))
+                {
+                    await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
+                }
+                else
+                {
+                    await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
+                }
 
                 var browser = await Puppeteer.LaunchAsync(new LaunchOptions
                 {

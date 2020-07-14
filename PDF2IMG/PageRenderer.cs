@@ -41,13 +41,20 @@ namespace BarnardTech.PDF2IMG
         /// that when creating a PageRenderer for the first time, there may be a significant wait while Chrome is
         /// downloaded.
         /// </summary>
-        public PageRenderer(string browserPath)
+        public PageRenderer(string browserPath = "")
         {
             AutoResetEvent readyEvent = new AutoResetEvent(false);
 
             new Task(async () =>
             {
-                await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
+                if (string.IsNullOrEmpty(browserPath))
+                {
+                    await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
+                }
+                else
+                {
+                    await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
+                }
 
                 var browser = await Puppeteer.LaunchAsync(new LaunchOptions
                 {
@@ -128,9 +135,16 @@ namespace BarnardTech.PDF2IMG
         /// </summary>
         /// <param name="onReady">A callback action which fires when the PageRenderer is ready.</param>
         /// <returns>The PageRenderer object.</returns>
-        public async static Task<PageRenderer> CreateAsync(Action onReady, string browserPath)
+        public async static Task<PageRenderer> CreateAsync(Action onReady, string browserPath = "")
         {
-            await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
+            if (string.IsNullOrEmpty(browserPath))
+            {
+                await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
+            }
+            else
+            {
+                await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
+            }
 
             var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
