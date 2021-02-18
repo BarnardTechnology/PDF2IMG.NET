@@ -323,7 +323,7 @@ namespace BarnardTech.PDF2IMG
         public void LoadPDF(string filename)
         {
             pdfLoadEvent.Reset();
-            LoadPDFAsync(filename);
+            LoadPDFAsync(filename).WaitAndUnwrapException();
             pdfLoadEvent.WaitOne();
         }
 
@@ -336,7 +336,7 @@ namespace BarnardTech.PDF2IMG
             pdfLoadEvent.Reset();
             //LoadPDFAsync(buffer);
             MemoryStream mStream = new MemoryStream(buffer);
-            LoadPDFAsync(mStream);
+            LoadPDFAsync(mStream).WaitAndUnwrapException();
             pdfLoadEvent.WaitOne();
         }
 
@@ -347,7 +347,7 @@ namespace BarnardTech.PDF2IMG
         public void LoadPDF(Stream stream)
         {
             pdfLoadEvent.Reset();
-            LoadPDFAsync(stream);
+            LoadPDFAsync(stream).WaitAndUnwrapException();
             pdfLoadEvent.WaitOne();
         }
 
@@ -355,7 +355,7 @@ namespace BarnardTech.PDF2IMG
         /// Loads a PDF from disk given the requested filename.
         /// </summary>
         /// <param name="filename">The filename of the PDF.</param>
-        public async void LoadPDFAsync(string filename)
+        public async Task<bool> LoadPDFAsync(string filename)
         {
             FileStream fStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
             await chromePage.EvaluateFunctionAsync("clearBuffer", new object[0]);
@@ -380,13 +380,15 @@ namespace BarnardTech.PDF2IMG
                     OnPDFLoaded(this, new EventArgs());
                 }).Start();
             }
+
+            return true;
         }
 
         /// <summary>
         /// Loads a PDF from a stream. Reading begins from wherever the stream's position is currently set - it will not be reset to 0.
         /// </summary>
         /// <param name="stream">The stream containing the PDF data.</param>
-        public async void LoadPDFAsync(Stream stream)
+        public async Task<bool> LoadPDFAsync(Stream stream)
         {
             await chromePage.EvaluateFunctionAsync("clearBuffer", new object[0]);
             byte[] chunk = new byte[1048576];
@@ -410,6 +412,8 @@ namespace BarnardTech.PDF2IMG
                     OnPDFLoaded(this, new EventArgs());
                 }).Start();
             }
+
+            return true;
         }
 
         ///// <summary>
