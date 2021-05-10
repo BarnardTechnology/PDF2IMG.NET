@@ -320,35 +320,29 @@ namespace BarnardTech.PDF2IMG
         /// Loads a PDF from disk given the requested filename.
         /// </summary>
         /// <param name="filename">The filename of the PDF.</param>
-        public void LoadPDF(string filename)
+        public bool LoadPDF(string filename)
         {
-            pdfLoadEvent.Reset();
-            LoadPDFAsync(filename).WaitAndUnwrapException();
-            pdfLoadEvent.WaitOne();
+            return LoadPDFAsync(filename).WaitAndUnwrapException();
         }
 
         /// <summary>
         /// Loads a PDF from a byte array.
         /// </summary>
         /// <param name="buffer">The byte array containing the PDF data.</param>
-        public void LoadPDF(byte[] buffer)
+        public bool LoadPDF(byte[] buffer)
         {
-            pdfLoadEvent.Reset();
             //LoadPDFAsync(buffer);
             MemoryStream mStream = new MemoryStream(buffer);
-            LoadPDFAsync(mStream).WaitAndUnwrapException();
-            pdfLoadEvent.WaitOne();
+            return LoadPDFAsync(mStream).WaitAndUnwrapException();
         }
 
         /// <summary>
         /// Loads a PDF from a stream. Reading begins from wherever the stream's position is currently set - it will not be reset to 0.
         /// </summary>
         /// <param name="stream">The stream containing the PDF data.</param>
-        public void LoadPDF(Stream stream)
+        public bool LoadPDF(Stream stream)
         {
-            pdfLoadEvent.Reset();
-            LoadPDFAsync(stream).WaitAndUnwrapException();
-            pdfLoadEvent.WaitOne();
+            return LoadPDFAsync(stream).WaitAndUnwrapException();
         }
 
         /// <summary>
@@ -367,7 +361,16 @@ namespace BarnardTech.PDF2IMG
                 var asBase64 = Convert.ToBase64String(chunk, 0, bytes);
                 await chromePage.EvaluateFunctionAsync("addBase64DataToBuffer", new[] { asBase64 });
             }
-            PageCount = await chromePage.EvaluateFunctionAsync<int>("openPdfFromBuffer", new object[0]);
+
+            try
+            {
+                PageCount = await chromePage.EvaluateFunctionAsync<int>("openPdfFromBuffer", new object[0]);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("PDF failed to load.");
+                return false;
+            }
 
             Console.WriteLine("PDF Loaded.");
             _pdfLoadWaiting = false;
