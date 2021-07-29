@@ -30,6 +30,8 @@ namespace BarnardTech.PDF2IMG
 
         FileResourceHandlerFactory fileResourceHandlerFactory;
 
+        private static readonly object _initializeLock = new object();
+
         /// <summary>
         /// Create a new PageRenderer. This function uses PuppeteerSharp to control an in-background copy of Chrome.
         /// If Chrome isn't available in the current application's path, it'll automatically download one. This means
@@ -51,10 +53,21 @@ namespace BarnardTech.PDF2IMG
                     await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
                 }
 
-                var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                //var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                //{
+                //    Headless = true
+                //});
+
+                // workaround required due to potential issues with multiple threads launching at the same time:
+                // https://github.com/garris/BackstopJS/issues/1084
+
+                Browser browser = null;
+                lock (_initializeLock)
                 {
-                    Headless = true
-                });
+                    var task = Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+                    task.Wait();
+                    browser = task.Result;
+                }
 
                 var page = await browser.NewPageAsync();
                 await page.SetRequestInterceptionAsync(true);
