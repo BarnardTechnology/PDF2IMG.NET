@@ -40,45 +40,47 @@ namespace BarnardTech.PDF2IMG
         /// </summary>
         public PDFDocument(string browserPath = "")
         {
-            AutoResetEvent readyEvent = new AutoResetEvent(false);
-
-            new Task(async () =>
+            // lock workaround required due to potential issues with multiple threads launching at the same time:
+            // https://github.com/garris/BackstopJS/issues/1084
+            lock (_initializeLock)
             {
-                if (string.IsNullOrEmpty(browserPath))
+                AutoResetEvent readyEvent = new AutoResetEvent(false);
+                new Task(async () =>
                 {
-                    await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
-                }
-                else
-                {
-                    await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
-                }
+                    if (string.IsNullOrEmpty(browserPath))
+                    {
+                        await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
+                    }
+                    else
+                    {
+                        await new BrowserFetcher(new BrowserFetcherOptions() { Path = browserPath }).DownloadAsync(BrowserFetcher.DefaultRevision);
+                    }
 
-                //var browser = await Puppeteer.LaunchAsync(new LaunchOptions
-                //{
-                //    Headless = true
-                //});
+                    var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                    {
+                        Headless = true
+                    });
 
-                // workaround required due to potential issues with multiple threads launching at the same time:
-                // https://github.com/garris/BackstopJS/issues/1084
 
-                Browser browser = null;
-                lock (_initializeLock)
-                {
-                    var task = Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
-                    task.Wait();
-                    browser = task.Result;
-                }
+                    //Browser browser = null;
+                    //lock (_initializeLock)
+                    //{
+                    //    var task = Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+                    //    task.WaitAndUnwrapException();
+                    //    browser = task.Result;
+                    //}
 
-                var page = await browser.NewPageAsync();
-                await page.SetRequestInterceptionAsync(true);
+                    var page = await browser.NewPageAsync();
+                    await page.SetRequestInterceptionAsync(true);
 
-                _init(browser, page, () =>
-                {
-                    readyEvent.Set();
-                });
-            }).Start();
+                    _init(browser, page, () =>
+                    {
+                        readyEvent.Set();
+                    });
+                }).Start();
 
-            readyEvent.WaitOne();
+                readyEvent.WaitOne();
+            }
         }
 
         private PDFDocument(Browser browser, Page page, Action onReady)
